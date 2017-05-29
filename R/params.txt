@@ -1,0 +1,17 @@
+#parameter setting
+readStrands="UN"
+chromRef=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,X,Y
+onlyProteinCodingGenes=TRUE
+maxSharedCount=5e-2
+minGeneDist=1e5
+minJunctionDist=1e5
+maxInvertedFusionCount=0.01
+minMR=2
+minNonDupMR=2
+maxMRfusionFc=2
+maxMRfusionNum=2
+sgtMRcount=10
+minSR=1
+minScore=3
+keepRData=FALSE
+exportFasta=FALSE
