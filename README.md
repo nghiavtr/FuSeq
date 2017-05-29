@@ -196,8 +196,8 @@ wget ftp.sra.ebi.ac.uk/vol1/fastq/SRR934/SRR934746/SRR934746_1.fastq.gz
 wget ftp.sra.ebi.ac.uk/vol1/fastq/SRR934/SRR934746/SRR934746_2.fastq.gz
 ```
 #### Indexing fasta sequences
-This is a long read dataset, the default k-mer length (k=31) is applied
-Index reference using k-mer length of 31. The index reference can be reused for other long read samples
+The default k-mer length (k=31) is used for reference indexing.
+The index reference can be reused for other long read samples
 ```sh
 TxIndexer -t Homo_sapiens.GRCh37.75.cdna.all.fa -o TxIndexer_idx_k31 -k 31
 ```
