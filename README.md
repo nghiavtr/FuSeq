@@ -161,7 +161,7 @@ wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRC
 The default of parameter setting is located at FuSeq_v0.1.0_linux_x86-64/R/params.txt.
 We highly suggest users with the setting of keepRData=TRUE to keep the processed data of FuSeq. If so, FuSeq will save all data into file FuSeq_process.RData. This file contains useful and relating information of fusion gene candidates such as supporting exons, read mapping positions, sequence reads, etc.
 
-### 7.4. Example for a short read sample 
+### 7.4. An example for a short read sample 
 We select the smallest breast cancer sample from the KPL-4 cell line. This sample contains short reads (50bp), a small library size (6.8 M read pairs) that is suitable for testing. For this dataset, to generate split reads, the default k-mer length of 31 is not appropriate. We use k-mer length of 21 instead.
 For data downloading and fusion gene detection, it takes around 0.5 hour in total using a single cpu. The time can vary due to download speeds as well.
 #### Download dataset
@@ -184,7 +184,7 @@ Rscript FuSeq_v0.1.0_linux_x86-64/R/FuSeq.R in=SRR064287_feqDir txfasta=Homo_sap
 ```
 The results is a list of fusion gene candidates stored in file fusions.FuSeq in the output folder (SRR064287_FuseqOut).
 
-### 7.5. Example for a long read sample 
+### 7.5. An example for a long read sample 
 Now we apply FuSeq for a long read sample from a glioma dataset.
 The selected sample SRR934746 contains 24.4 M read pairs with 100bp read long.
 For this dataset, the default k-mer length of 31 is used.
