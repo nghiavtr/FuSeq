@@ -120,8 +120,98 @@ There are several parameters input for the pipeline. The default parameter setti
 - keepRData (FALSE): if users want to save all data generated during fusion gene discovery using Rscripts. If it is set keepRData=TRUE, a single *.RData file will be created to store the data.
 - exportFasta (FALSE): Set exportFasta=TRUE if users want to export sequences of fusion reads
 
-## 7. License
+
+
+## 7. Pratical examples of using FuSeq
+
+In this section, we introduce how to use FuSeq by a step-by-step tutorial using several public real RNA-seq samples.
+For simplicity, in this practice, the FuSeq software, the annotation, RNA-seq data samples, and the results of fusion detection are put togetther in the same (current) folder.
+
+### 7.1. Download and install
+#### Download and configure FuSeq
+```sh
+wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/FuSeq_v0.1.0_linux_x86-64.tar.gz
+tar -xzvf FuSeq_v0.1.0_linux_x86-64.tar.gz
+cd FuSeq_v0.1.0_linux_x86-64
+bash configure.sh
+cd ..
+```
+#### Set paths to FuSeq
+```sh
+export LD_LIBRARY_PATH=$PWD/FuSeq_v0.1.0_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
+export PATH=$PWD/FuSeq_v0.1.0_linux_x86-64/linux/bin:$PATH
+```
+### 7.2. Download and prepare the reference files
+#### Download the fasta and gtf of transcripts
+```sh
+wget http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
+gunzip Homo_sapiens.GRCh37.75.cdna.all.fa.gz
+wget http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
+gunzip Homo_sapiens.GRCh37.75.gtf.gz
+```
+#### Create sqlite
+```sh
+Rscript FuSeq_v0.1.0_linux_x86-64/R/createSqlite.R Homo_sapiens.GRCh37.75.gtf Homo_sapiens.GRCh37.75.sqlite 
+```
+#### Download the extra transcript information and annotation from FuSeq
+```sh
+wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData
+```
+### 7.3. Parameter setting
+The default of parameter setting is located at FuSeq_v0.1.0_linux_x86-64/R/params.txt.
+We highly suggest users with the setting of keepRData=TRUE to keep the processed data of FuSeq. If so, FuSeq will save all data into file FuSeq_process.RData. This file contains useful and relating information of fusion gene candidates such as supporting exons, read mapping positions, sequence reads, etc.
+
+### 7.4. Example for a short read sample 
+We select the smallest breast cancer sample from the KPL-4 cell line. This sample contains short reads (50bp), a small library size (6.8 M read pairs) that is suitable for testing. For this dataset, to generate split reads, the default k-mer length of 31 is not appropriate. We use k-mer length of 21 instead.
+For data downloading and fusion gene detection, it takes around 0.5 hour in total using a single cpu. The time can vary due to download speeds as well.
+#### Download dataset
+```sh
+wget ftp.sra.ebi.ac.uk/vol1/fastq/SRR064/SRR064287/SRR064287_1.fastq.gz
+wget ftp.sra.ebi.ac.uk/vol1/fastq/SRR064/SRR064287/SRR064287_2.fastq.gz
+```
+#### Indexing fasta sequences
+Note: because of short read, a small k-mer length k=21 (k=31 by default) is used for this dataset. The index reference can be reused for other short read samples
+```sh
+TxIndexer -t Homo_sapiens.GRCh37.75.cdna.all.fa -o TxIndexer_idx_k21 -k 21
+```
+#### Extract fusion equivalence classes and split reads
+```sh
+FuSeq -i TxIndexer_idx_k21 -l IU -1 <(gunzip -c SRR064287_1.fastq.gz) -2 <(gunzip -c SRR064287_2.fastq.gz) -p 1 -g Homo_sapiens.GRCh37.75.gtf -o SRR064287_feqDir 
+```
+#### Discover fusion genes
+```sh
+Rscript FuSeq_v0.1.0_linux_x86-64/R/FuSeq.R in=SRR064287_feqDir txfasta=Homo_sapiens.GRCh37.75.cdna.all.fa sqlite=Homo_sapiens.GRCh37.75.sqlite txanno=Homo_sapiens.GRCh37.75.txAnno.RData out=SRR064287_FuseqOut params=FuSeq_v0.1.0_linux_x86-64/R/params.txt
+```
+The results is a list of fusion gene candidates stored in file fusions.FuSeq in the output folder (SRR064287_FuseqOut).
+
+### 7.5. Example for a long read sample 
+Now we apply FuSeq for a long read sample from a glioma dataset.
+The selected sample SRR934746 contains 24.4 M read pairs with 100bp read long.
+For this dataset, the default k-mer length of 31 is used.
+It takes around 01-02 hours for both downloading data and detecting fusion gene candidates using a single cpu.
+The time also varies depending on download speeds.
+#### Download dataset
+```sh
+wget ftp.sra.ebi.ac.uk/vol1/fastq/SRR934/SRR934746/SRR934746_1.fastq.gz
+wget ftp.sra.ebi.ac.uk/vol1/fastq/SRR934/SRR934746/SRR934746_2.fastq.gz
+```
+#### Indexing fasta sequences
+This is a long read dataset, the default k-mer length (k=31) is applied
+Index reference using k-mer length of 31. The index reference can be reused for other long read samples
+```sh
+TxIndexer -t Homo_sapiens.GRCh37.75.cdna.all.fa -o TxIndexer_idx_k31 -k 31
+```
+#### Extract fusion equivalence classes and split reads
+```sh
+FuSeq -i TxIndexer_idx_k31 -l IU -1 <(gunzip -c SRR934746_1.fastq.gz) -2 <(gunzip -c SRR934746_2.fastq.gz) -p 1 -g Homo_sapiens.GRCh37.75.gtf -o SRR934746_feqDir 
+```
+#### Discover fusion genes
+```sh
+Rscript FuSeq_v0.1.0_linux_x86-64/R/FuSeq.R in=SRR934746_feqDir txfasta=Homo_sapiens.GRCh37.75.cdna.all.fa sqlite=Homo_sapiens.GRCh37.75.sqlite txanno=Homo_sapiens.GRCh37.75.txAnno.RData out=SRR934746_FuseqOut params=FuSeq_v0.1.0_linux_x86-64/R/params.txt
+```
+The results is a list of fusion gene candidates stored in file fusions.FuSeq in the output folder (SRR934746_FuseqOut).
+## 8. License
 FuSeq uses GNU General Public License GPL-3
 
-## 8. References
+## 9. References
 (update later)
