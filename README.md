@@ -162,7 +162,7 @@ The default of parameter setting is located at FuSeq_v0.1.0_linux_x86-64/R/param
 For more advanced-level users, we suggest running FuSeq with the setting of keepRData=TRUE to keep the processed data of FuSeq, then FuSeq will save all data into file FuSeq_process.RData. This file contains the results of both mapped read pipeline and split read pipeline, and extra relevant information of fusion gene candidates such as supporting exons, read mapping positions, sequence reads, etc.
 
 ### 7.4. An example for a short read sample 
-We select the smallest breast cancer sample from the KPL-4 cell line. This sample contains short reads (50bp), a small library size (6.8 M read pairs) that is suitable for testing. For this dataset, to generate split reads, the default k-mer length of 31 is not appropriate. We use k-mer length of 21 instead.
+We select a breast cancer sample from the KPL-4 cell line. This sample contains short reads (50bp), a small library size (6.8 M read pairs) that is suitable for testing purpose. For this dataset, to generate split reads, the default k-mer length of 31 is not appropriate. We use k-mer length of 21 instead.
 For data downloading and fusion gene detection, it takes around 0.5 hour in total using a single cpu. The time can vary due to download speeds as well.
 #### Download dataset
 ```sh
