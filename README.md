@@ -18,6 +18,9 @@ The latest version and information of FuSeq are updated at https://github.com/ng
 ## 2. Download and installation
 If you use the binary verion of FuSeq: 
 - Download the lastest binary version from FuSeq website: [FuSeq_v0.1.0_linux_x86-64](https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/FuSeq_v0.1.0_linux_x86-64.tar.gz)
+```sh
+wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/FuSeq_v0.1.0_linux_x86-64.tar.gz -O FuSeq_v0.1.0_linux_x86-64.tar.gz
+```
 - Uncompress to folder
 ```sh
 tar -xzvf FuSeq_v0.1.0_linux_x86-64.tar.gz
