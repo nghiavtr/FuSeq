@@ -133,7 +133,7 @@ For simplicity, in this practice, the FuSeq software, the annotation, RNA-seq da
 ### 7.1. Download and install
 #### Download and configure FuSeq
 ```sh
-wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/FuSeq_v0.1.0_linux_x86-64.tar.gz
+wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/FuSeq_v0.1.0_linux_x86-64.tar.gz -O FuSeq_v0.1.0_linux_x86-64.tar.gz
 tar -xzvf FuSeq_v0.1.0_linux_x86-64.tar.gz
 cd FuSeq_v0.1.0_linux_x86-64
 bash configure.sh
