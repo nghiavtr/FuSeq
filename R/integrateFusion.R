@@ -91,7 +91,7 @@ integrateFusion <-function(myFusionFinal.MR, myFusionFinal.SR, FuSeq.params, fra
 
   ##### merging two fusion lists to be one
   myFusionFinal=myFusionFinal.SR[,c("chrom5p","brpos5.start","brpos5.end","chrom3p","brpos3.start","brpos3.end","fusionName","score","strand5p","strand3p","supportRead")]
-  myFusionFinal=rbind(myFusionFinal,myFusionFinal.MR[,c("chrom5p","brpos5.start","brpos5.end","chrom3p","brpos3.start","brpos3.end","fusionName","score","strand5p","strand3p","supportRead")])
+  if (nrow(myFusionFinal.MR)>0) myFusionFinal=rbind(myFusionFinal,myFusionFinal.MR[,c("chrom5p","brpos5.start","brpos5.end","chrom3p","brpos3.start","brpos3.end","fusionName","score","strand5p","strand3p","supportRead")])
   
   myFusionFinal=myFusionFinal[!duplicated(myFusionFinal$fusionName),]
   dim(myFusionFinal)
@@ -115,6 +115,9 @@ integrateFusion <-function(myFusionFinal.MR, myFusionFinal.SR, FuSeq.params, fra
   #order by score
   myFusionFinal=myFusionFinal[order(myFusionFinal$score,decreasing = TRUE),]
   
+  if (nrow(myFusionFinal)==0){
+    return(list(myFusionFinal=myFusionFinal,myFusionFinal.SR=myFusionFinal.SR,myFusionFinal.MR=myFusionFinal.MR))
+  }
   
   myFusionFinal$MR=myFusionFinal$SR=0
   myFusionFinal$SR[which(!is.na(match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.SR$fusionName))))]=1

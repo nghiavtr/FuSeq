@@ -75,6 +75,10 @@ postProcessMappedRead <-function(inPath, anntxdb, FuSeq.SR, FuSeq.MR, FuSeq.para
   myFusionFinal=myFusionFinal[myFusionFinal$tx5LenTest >= 0.10,]
   myFusionFinal=myFusionFinal[myFusionFinal$tx3LenTest >= 0.10,]
   
+  if (nrow(myFusionFinal)==0){
+    res=list(myFusionFinal=myFusionFinal, junctBr.refine=junctBr)
+    return(res)
+  }
   # ##### create a score
   myFusionFinal$score=myFusionFinal$correctedCount
   

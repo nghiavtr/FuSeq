@@ -606,8 +606,16 @@ if(length(rmID)>0) myFusion=myFusion[-rmID,]
 
 ### get final results
 myFusionFinal=myFusion
-myFusionFinal=myFusionFinal[!duplicated(myFusionFinal$name12),]
-dim(myFusionFinal)
+#myFusionFinal=myFusionFinal[!duplicated(myFusionFinal$name12),] #biased to the first encountered read
+#keep the ones with max totalCount
+fgeSet=unique(myFusionFinal$name12)
+keepID=NULL
+for (i in 1:length(fgeSet)){
+  myID=which(myFusionFinal$name12==fgeSet[i])
+  keepID=c(keepID,myID[which.max(myFusionFinal$totalCount[myID])])
+}
+myFusionFinal=myFusionFinal[keepID,]
+#dim(myFusionFinal)
 
 # Filter by minSR
 myFusionFinal=myFusionFinal[myFusionFinal$supportCount>=FuSeq.params$minSR,]
@@ -625,7 +633,6 @@ return(list(junctInfo=junctInfo,myFusionFinal=myFusionFinal, myFusion=myFusion, 
 
 
 }
-
 
 
 

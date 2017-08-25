@@ -13,5 +13,5 @@ maxMRfusionNum=2
 sgtMRcount=10
 minSR=1
 minScore=3
-keepRData=FALSE
+keepRData=TRUE
 exportFasta=FALSE
