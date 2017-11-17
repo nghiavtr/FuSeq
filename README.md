@@ -119,7 +119,7 @@ There are several parameters input for the pipeline. The default parameter setti
 - minMR (2), minNonDupMR (2): the minimum supporting count (non-duplicated supporting count) of a fusion gene in the mapped read pipeline.
 - minSR (1): the minimum supporting count of a fusion gene in the split read (SR) pipeline.
 - minScore (3): the minimum score of a fusion gene.
-- keepRData (TRUE): if users want to save all data generated during fusion gene discovery using Rscripts. If it is set keepRData=TRUE, several *.RData files will be exported.
+- keepRData (TRUE): if users want to save all data generated during fusion gene discovery using Rscripts (keepRData=TRUE), then several *.RData files contain processed data will be exported.
 - exportFasta (FALSE): Set exportFasta=TRUE if users want to export sequences of fusion reads
 
 
