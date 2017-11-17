@@ -5,6 +5,12 @@
 processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSeq.params){
   cat("\n ------------------------------------------------------------------")
   cat("\n Processing split reads (SR) from dataset: ",inPath, " read strands:", FuSeq.params$readStrands)
+  if (FuSeq.params$keepRData){
+    if (is.null(FuSeq.params$outputDir)){ 
+      FuSeq.params$outputDir=inPath
+      cat("\n No output is set, data will be saved to ", inPath)
+    }
+  }
   
   ##### get fragment information
   fragmentInfo=read.csv(paste(inPath,"/fragmentInfo.txt",sep=""), header =TRUE, sep="\t")
@@ -14,24 +20,22 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
   flen.max=max(fragRg)
   ##### find split reads
   cat("\n Get split reads ...")
-  splitReads=fsizes=NULL
+  fusionGene=fsizes=NULL
   frfiles=list.files(inPath,paste("splitReadInfo_*",sep=""))
   for (i in 1:length(frfiles)){
     tmpDat=read.csv(paste(inPath,"/",frfiles[i],sep=""), header =FALSE, sep="\t")
-    splitReads=rbind(splitReads,tmpDat)
+    fusionGene=rbind(fusionGene,tmpDat)
     fsizes=c(fsizes,nrow(tmpDat))
   }
   fsizeLadder=cumsum(fsizes)
-  colnames(splitReads)=c("header","readType","direction","front_tx","front_gene","front_hitpos","front_querypos","front_len","back_tx","back_gene","back_hitpos","back_querypos","back_len","matchedGene","matchedDirect","matchedPos")
-  splitReads$tx12=paste(splitReads$front_tx,splitReads$back_tx,sep="-")
-  splitReads$tx21=paste(splitReads$back_tx,splitReads$front_tx,sep="-")
-  splitReads$name12=paste(splitReads$front_gene,splitReads$back_gene,sep="-")
-  splitReads$name21=paste(splitReads$back_gene,splitReads$front_gene,sep="-")
+  colnames(fusionGene)=c("header","readType","direction","front_tx","front_gene","front_hitpos","front_querypos","front_len","back_tx","back_gene","back_hitpos","back_querypos","back_len","matchedGene","matchedDirect","matchedPos")
+  fusionGene$tx12=paste(fusionGene$front_tx,fusionGene$back_tx,sep="-")
+  fusionGene$tx21=paste(fusionGene$back_tx,fusionGene$front_tx,sep="-")
+  fusionGene$name12=paste(fusionGene$front_gene,fusionGene$back_gene,sep="-")
+  fusionGene$name21=paste(fusionGene$back_gene,fusionGene$front_gene,sep="-")
   
   
   ############# starting process
-  fusionGene=splitReads
-
   cat("\n Extract other biological information...")
   #add few biological information
   res=select(anntxdb, keys=as.character(fusionGene$front_gene), columns=c("GENEID","TXCHROM","TXSTRAND"), keytype = "GENEID")
@@ -82,6 +86,12 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
   #gene distance
   geneDist=computeGeneDistance(fusionGene,anntxdb,minGeneDist=-1)
   fusionGene$geneDist=geneDist
+  
+  if (FuSeq.params$keepRData){
+    cat("\n Saving the full set of SR fusion candidates ...")
+    save(fusionGene,file=paste(FuSeq.params$outputDir,"/FuSeq_SR_fusionGene_full.RData",sep=""))
+  }
+  
   
   myFusion=fusionGene
   
@@ -137,7 +147,7 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
  
   ####### check canonical splicing sites
   cat("\n Remaining fusion reads: ",nrow(myFusion))
-  cat("\n Check canonical splicing sites, it takes time ...")
+  cat("\n Check canonical splicing sites, ...")
   
   #####preparing annotation
   library(Biostrings)
@@ -153,28 +163,38 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
 
   myFusion$GTATCEnd=myFusion$ATATCEnd=myFusion$ATEnd=myFusion$GCEnd=myFusion$GTEnd=myFusion$ssExEnd=myFusion$ssExEndGe=rep(-1,nrow(myFusion))
   myFusion$AAStart=myFusion$ATStart=myFusion$ACStart=myFusion$AGStart=myFusion$ssExStart=myFusion$ssExStartGe=rep(-1,nrow(myFusion))
+  
+  ##### select exon information of all genes
+  exonInfo.all=select(anntxdb, keys=unique(c(as.character(myFusion$front_gene),as.character(myFusion$back_gene))), columns=c("TXNAME","EXONID","EXONSTART","EXONEND","TXSTRAND"), keytype = "GENEID")
+  
   ##### check splicing
   cat("\n Checking in 5 prime site...")
   
   #to speedup we do in blocks
-  blockSize=20000
+  blockSize=10000
   blockNum=trunc(nrow(myFusion)%/%blockSize) + ifelse(nrow(myFusion)%%blockSize>0,1,0)
   #sorted by front_tx
   myFusion=myFusion[order(myFusion$front_tx),]
+  #exonInfo.all=select(anntxdb, keys=unique(c(as.character(myFusion$front_gene))), columns=c("TXNAME","EXONID","EXONSTART","EXONEND","TXSTRAND"), keytype = "GENEID")
   
-  mytime <- system.time({
   
+
   for (blockID in 1:blockNum){
-    cat("\n",blockID," blocks processed")
+    cat("\n Processing block ",blockID)
     
     block.keepID=c(((blockID-1)*blockSize+1):(blockID*blockSize))
     block.keepID=block.keepID[block.keepID<=nrow(myFusion)]
     myFusionBlock=myFusion[block.keepID,]
     
-    exonInfo=select(anntxdb, keys=unique(c(as.character(myFusionBlock$front_gene))), columns=c("TXNAME","EXONID","EXONSTART","EXONEND","TXSTRAND"), keytype = "GENEID")
+#    mytime <- system.time({
+    #exonInfo=select(anntxdb, keys=unique(c(as.character(myFusionBlock$front_gene))), columns=c("TXNAME","EXONID","EXONSTART","EXONEND","TXSTRAND"), keytype = "GENEID")
+    exonInfo=exonInfo.all[as.character(exonInfo.all$GENEID) %in% as.character(myFusionBlock$front_gene),]
+#    })
+#    mytime
+
       frontTxList=as.character(myFusionBlock$front_tx)
       frontTxSet=unique(frontTxList)
-      cat("\n Total transcripts ",length(frontTxSet))
+      cat(": total transcripts ",length(frontTxSet))
       for (i in 1:length(frontTxSet)){
         
         keepID=which(frontTxList==frontTxSet[i])
@@ -240,39 +260,39 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
         
         myFusionBlock$ssExEndGe[keepID]=myDiff
         
-        if (i %% 1000 ==0) cat("\n",i," transcripts processed")
       }
     #update results
     myFusion[block.keepID,]=myFusionBlock
   }
 
-  })
-    mytime
-    
+
     
   
   cat("\n\n Checking in 3 prime site...")
   
   #to speedup we do in blocks
-  blockSize=20000
+  blockSize=10000
   blockNum=trunc(nrow(myFusion)%/%blockSize) + ifelse(nrow(myFusion)%%blockSize>0,1,0)
   #sorted by back_tx
   myFusion=myFusion[order(myFusion$back_tx),]
   
-  mytime <- system.time({
+  
     
     for (blockID in 1:blockNum){
-      cat("\n",blockID," blocks processed")
+      cat("\n Processing block ",blockID)
       
       block.keepID=c(((blockID-1)*blockSize+1):(blockID*blockSize))
       block.keepID=block.keepID[block.keepID<=nrow(myFusion)]
       myFusionBlock=myFusion[block.keepID,]
       
-      exonInfo=select(anntxdb, keys=unique(c(as.character(myFusionBlock$back_gene))), columns=c("TXNAME","EXONID","EXONSTART","EXONEND","TXSTRAND"), keytype = "GENEID")
+#      exonInfo=select(anntxdb, keys=unique(c(as.character(myFusionBlock$back_gene))), columns=c("TXNAME","EXONID","EXONSTART","EXONEND","TXSTRAND"), keytype = "GENEID")
+      
+      exonInfo=exonInfo.all[as.character(exonInfo.all$GENEID) %in% as.character(myFusionBlock$back_gene),]
+      
       
         backTxList=as.character(myFusionBlock$back_tx)
         backTxSet=unique(backTxList)
-        cat("\n Total transcripts ",length(backTxSet))
+        cat(": total transcripts ",length(backTxSet))
         for (i in 1:length(backTxSet)){
           keepID=which(backTxList==backTxSet[i])
           mySR=myFusionBlock[keepID,]
@@ -329,18 +349,12 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
           
           myFusionBlock$ssExStartGe[keepID]=myDiff
           
-          if (i %% 1000 ==0) cat("\n",i," processed")
         }
-        
- 
-      
+
       #update results
       myFusion[block.keepID,]=myFusionBlock
     }
-    
-  })
-  mytime
-  
+
   myFusion$junctDist=abs(myFusion$brchposEx5-myFusion$brchposEx3)
   
   myFusion$ssStart=myFusion$ssEnd=rep(-1,nrow(myFusion))
@@ -355,33 +369,35 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
   myFusion$ssStart=ifelse(abs(myFusion$ssExStartGe)<shrinkLen,2,myFusion$ssStart)
   myFusion$ssStart=ifelse(abs(myFusion$ssExStart)<shrinkLen,1,myFusion$ssStart)
   
+  if (FuSeq.params$keepRData){
+    cat("\n Saving SR fusion candidates with extra information...")
+    save(myFusion,file=paste(FuSeq.params$outputDir,"/FuSeq_SR_myFusion.RData",sep=""))
+  }
   
   
   #keep only split reads passed the splicing site condition
-  myFusionTmp=myFusion
-  myFusionTmp=myFusionTmp[myFusionTmp$ssStart>0,]
-  myFusionTmp=myFusionTmp[myFusionTmp$ssEnd>0,]
+  myFusion=myFusion[myFusion$ssStart>0,]
+  myFusion=myFusion[myFusion$ssEnd>0,]
 
-  rmID=which(myFusionTmp$ssEnd>=3 & myFusionTmp$ssStart>=3)
-  if (length(rmID)>0)  myFusionTmp=myFusionTmp[-rmID,]
+  rmID=which(myFusion$ssEnd>=3 & myFusion$ssStart>=3)
+  if (length(rmID)>0)  myFusion=myFusion[-rmID,]
   
    cat("\n\n Checking possible paralogs...")
 
   #remove paralogs from database
-  rmID=unlist(lapply(c(1:nrow(myFusionTmp)), function(x){
-    par1=c(as.character(myFusionTmp$gene1[x]),geneParalog[which(geneParalog[,1]==as.character(myFusionTmp$gene1[x])),2])
-    par2=c(as.character(myFusionTmp$gene2[x]),geneParalog[which(geneParalog[,1]==as.character(myFusionTmp$gene2[x])),2])
+  rmID=unlist(lapply(c(1:nrow(myFusion)), function(x){
+    par1=c(as.character(myFusion$gene1[x]),geneParalog[which(geneParalog[,1]==as.character(myFusion$gene1[x])),2])
+    par2=c(as.character(myFusion$gene2[x]),geneParalog[which(geneParalog[,1]==as.character(myFusion$gene2[x])),2])
     if (length(par1)>0 & length(par2)>0) return(length(intersect(par1,par2))>0)
     return(FALSE)
   }))
   
-  myFusionTmp$paralog=rep(0,nrow(myFusionTmp))
-  myFusionTmp$paralog[rmID]=1
-  myFusionTmp=myFusionTmp[myFusionTmp$paralog==0,]
+  myFusion$paralog=rep(0,nrow(myFusion))
+  myFusion$paralog[rmID]=1
+  myFusion=myFusion[myFusion$paralog==0,]
   
 
-  myFusionFinal=myFusionTmp
-	res=list(myFusionFinal=myFusionFinal,myFusion=myFusion,fusionGene=fusionGene, splitReads=splitReads,fragmentInfo=fragmentInfo,fragDist=fragDist,myFusionFP=myFusionFP)
+	res=list(myFusionFinal=myFusion,fusionGene=fusionGene,fragmentInfo=fragmentInfo,fragDist=fragDist,myFusionFP=myFusionFP)
 	return(res)
 }
 

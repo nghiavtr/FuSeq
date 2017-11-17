@@ -6,8 +6,21 @@ processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feq
 
 	cat("\n ------------------------------------------------------------------")
 	cat("\n Processing mapped reads (MR) from dataset: ",inPath, " read strands:", FuSeq.params$readStrands)
-	if (is.null(feqInfo))
+	if (FuSeq.params$keepRData){
+	  if (is.null(FuSeq.params$outputDir)){ 
+	    FuSeq.params$outputDir=inPath
+	    cat("\n No output is set, data will be saved to ", inPath)
+	  }
+	}
+	
+	if (is.null(feqInfo)){
 	  feqInfo=processFEQ(inPath,geneAnno,anntxdb,geeqMap,readStrands=FuSeq.params$readStrands,chromRef=FuSeq.params$chromRef)
+	  if (FuSeq.params$keepRData){
+	    cat("\n Saving MR fusion candidates ...")
+	    save(feqInfo,file=paste(FuSeq.params$outputDir,"/FuSeq_MR_feqInfo.RData",sep=""))
+	  }
+	}
+
 	
 	if (is.null(feqInfo)) return(NULL)
 

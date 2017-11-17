@@ -42,8 +42,7 @@ if (is.na(outputDir)){
 	outputDir=inputFeqDir
 }else{
 	if (dir.exists(outputDir)){
-		cat("\nCan not create the output directory. Stop!")
-		validatedCommand=FALSE
+		cat("\nWarning: The output directory is already existed, old results will be over written")
 	}else dir.create(outputDir)
 }
 
@@ -128,6 +127,7 @@ if (validatedCommand){
 	source("/path/to/postProcessSplitRead.R")
 	source("/path/to/integrateFusion.R")
 	
+	FuSeq.params$outputDir=outputDir
 	inPath=inputFeqDir
 	myFusionOut=NULL;
 	
@@ -184,5 +184,4 @@ if (validatedCommand){
 
 cat("\n Done! \n")
 }
-
 
