@@ -1,5 +1,5 @@
 #####################################
-# Documents for FuSeq version 0.1.0
+# Documents for FuSeq version 0.1.1
 #####################################
 
 ## 1. Introduction
@@ -83,7 +83,7 @@ FuSeq uses R scripts in *FuSeq_home/R* directory for this step. The transcript f
 ```sh
 Rscript FuSeq_home/R/createSqlite.R Homo_sapiens.GRCh37.75.gtf Homo_sapiens.GRCh37.75.sqlite 
 ```
-- A supporting annotation file containing information of paralogs, gene types, etc. For human Ensemble annotation version  GRCh37.75, the file was prepared and available for download ([Homo_sapiens.GRCh37.75.txAnno.RData](https://github.com/nghiavtr/FuSeq/releases/download/v0.1.1/Homo_sapiens.GRCh37.75.txAnno.RData)). The similar files for other annotation versions are preparing and will be available soon.
+- A supporting annotation file containing information of paralogs, gene types, etc. For human Ensemble annotation version  GRCh37.75, the file was prepared and available for download ([Homo_sapiens.GRCh37.75.txAnno.RData](https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData)). The similar files for other annotation versions are preparing and will be available soon.
 ```sh
  wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData -O Homo_sapiens.GRCh37.75.txAnno.RData
 ```
@@ -157,7 +157,7 @@ Rscript FuSeq_v0.1.1_linux_x86-64/R/createSqlite.R Homo_sapiens.GRCh37.75.gtf Ho
 ```
 #### Download the extra transcript information and annotation from FuSeq
 ```sh
-wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.1/Homo_sapiens.GRCh37.75.txAnno.RData
+wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData
 ```
 ### 7.3. Parameter setting
 The default of parameter setting is located at FuSeq_v0.1.1_linux_x86-64/R/params.txt that we will use for the pratical examples.
