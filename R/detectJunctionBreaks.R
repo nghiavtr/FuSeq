@@ -34,11 +34,20 @@ detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStra
   readLen=fragmentInfo[1,1]
   #load the feq file
   feqRaw=read.csv(paste(inPath,"/feq_",readStrands,".txt",sep=""), header =TRUE, sep="\t")
+  
+  # #Keep only reads and feqs relating to myFusionFinal
+  # allTx=select(anntxdb, keys=unique(c(as.character(myFusionFinal$gene5p),as.character(myFusionFinal$gene3p))), columns=c("TXNAME"), keytype = "GENEID")
+  # feqRaw=feqRaw[as.character(feqRaw$Transcript) %in% as.character(allTx$TXNAME),]
+  
   feqRead1=feqRaw[feqRaw$Read==1,]
   feqRead2=feqRaw[feqRaw$Read==2,]
   #get feq-fge map
   # feqFgeMap=feqInfo$feqFgeMap
   # feq=feqInfo$feq
+  
+  
+  
+  
   cat("\n Preparing other information ...")
   feqFtxMap1=tapply(as.character(feqRead1$Transcript),feqRead1$Feq,c)
   feqRead1Name=unlist(lapply(feqFtxMap1,function(x) paste(x,collapse =" ")))
@@ -350,7 +359,9 @@ detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStra
  
   cat("\n Get reads supporting constituent genes")
   txeq=read.csv(paste(inPath,"/rawCount.txt",sep=""), header =TRUE, sep="\t")
-  txeq$geneID=geneAnno[match(as.character(txeq$Transcript),geneAnno[,1]),6]
+  #txeq$geneID=geneAnno[match(as.character(txeq$Transcript),geneAnno[,1]),6] # risky: do not pass geneAnno but still use here
+  txeq$geneID=txToGene$GENEID[match(as.character(txeq$Transcript),as.character(txToGene$TXNAME))]
+    
   geeq=txeq[,c(3,7,8)]
   geeq=geeq[!duplicated(geeq),]
   geCount=tapply(geeq$Count,geeq$geneID,sum)
@@ -360,7 +371,11 @@ detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStra
   myFusionFinal$gene2Count[is.na(myFusionFinal$gene2Count)]=0
   
   #number of feq supporting a fge
-  feqNum=sapply(as.character(myFusionFinal$name12),function(mykey) length(feqFgeMap[[mykey]]))
+  #feqNum=sapply(as.character(myFusionFinal$name12),function(mykey) length(feqFgeMap[[mykey]]))
+  matchID=match(as.character(myFusionFinal$name12),names(feqFgeMap))
+  myfeqID=feqFgeMap[matchID]
+  feqNum=sapply(myfeqID, length)
+  
   myFusionFinal$feqNum=feqNum
 
   return(list(myFusionFinal=myFusionFinal,junctInfo=junctInfo,fsizeLadder=fsizeLadder))

@@ -47,7 +47,8 @@ myFusionTmp2$mappedCount=0
 myFusionTmp2$mappedCount[which(!is.na(matchID))]=mappedFge$supportCount[na.omit(matchID)]
 
 #filter again by inverted direction fusion genes
-myFusionTmp2=myFusionTmp2[myFusionTmp2$total21 <= myFusionTmp2$totalCount*0.01,]
+if (FuSeq.params$maxInvertedFusionCount > 0)
+myFusionTmp2=myFusionTmp2[myFusionTmp2$total21 <= myFusionTmp2$totalCount*FuSeq.params$maxInvertedFusionCount,]
 
 
 ##### process cases: geneA-geneB vs geneA-geneC where geneB and geneC are paralogs or overlapping
@@ -595,9 +596,11 @@ if (length(keepID)>0)
 for (i in 1:length(keepID)){
   myID=which(as.character(myFusion$name12)==as.character(myFusionFinal$name12[keepID[i]]))
   res=myFusion[myID,]
+  #if(sd(res$front_hitpos)<1)  rmID=c(rmID,myID)
+  #if(sd(res$back_hitpos)<1)  rmID=c(rmID,myID)
   
-  if(sd(res$front_hitpos)<1)  rmID=c(rmID,myID)
-  if(sd(res$back_hitpos)<1)  rmID=c(rmID,myID)
+  if(sd(res$front_hitpos)<1 & length(unique(res$front_hitpos))<3)  rmID=c(rmID,myID)
+  if(sd(res$back_hitpos)<1 & length(unique(res$back_hitpos))<3)  rmID=c(rmID,myID)
 }
 
 if(length(rmID)>0) myFusion=myFusion[-rmID,]

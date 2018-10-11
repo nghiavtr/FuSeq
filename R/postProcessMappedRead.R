@@ -62,6 +62,10 @@ postProcessMappedRead <-function(inPath, anntxdb, FuSeq.SR, FuSeq.MR, FuSeq.para
     myFusionFinal=myFusionFinal[which(is.na(match(myFusionFinal$fusionName,rmFusion))),]
   }
   
+  if (nrow(myFusionFinal)==0){ #no fusions
+    res=list(myFusionFinal=myFusionFinal, junctBr.refine=junctBr)
+    return(res)
+  }
   
   tx3LenTest=tx5LenTest=NULL;
   for (i in 1:nrow(myFusionFinal)){
@@ -75,7 +79,7 @@ postProcessMappedRead <-function(inPath, anntxdb, FuSeq.SR, FuSeq.MR, FuSeq.para
   myFusionFinal=myFusionFinal[myFusionFinal$tx5LenTest >= 0.10,]
   myFusionFinal=myFusionFinal[myFusionFinal$tx3LenTest >= 0.10,]
   
-  if (nrow(myFusionFinal)==0){
+  if (nrow(myFusionFinal)==0){ #no fusions
     res=list(myFusionFinal=myFusionFinal, junctBr.refine=junctBr)
     return(res)
   }
@@ -110,6 +114,7 @@ postProcessMappedRead <-function(inPath, anntxdb, FuSeq.SR, FuSeq.MR, FuSeq.para
   res=list(myFusionFinal=myFusionFinal, junctBr.refine=junctBr)
   return(res)
 }
+
 
 
 

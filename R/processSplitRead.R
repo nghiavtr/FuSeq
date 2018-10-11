@@ -2,7 +2,7 @@
 ##### process split reads
 ############################################################
 
-processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSeq.params){
+processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params){
   cat("\n ------------------------------------------------------------------")
   cat("\n Processing split reads (SR) from dataset: ",inPath, " read strands:", FuSeq.params$readStrands)
   if (FuSeq.params$keepRData){
@@ -84,7 +84,7 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, geeqMap, txFastaFile, FuSe
   fusionGene$adjtx12Count=adjtx12Count[match(as.character(fusionGene$tx12),names(adjtx12Count))]
   
   #gene distance
-  geneDist=computeGeneDistance(fusionGene,anntxdb,minGeneDist=-1)
+  geneDist=computeGeneDistance(fusionGene,anntxdb)
   fusionGene$geneDist=geneDist
   
   if (FuSeq.params$keepRData){

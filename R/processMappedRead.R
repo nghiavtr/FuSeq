@@ -2,7 +2,7 @@
 ##### process mapped reads
 ############################################################
 
-processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feqInfo=NULL){
+processMappedRead <-function(inPath,geneAnno,anntxdb,geeqMap=NULL,FuSeq.params,feqInfo=NULL,doBioFilter=TRUE){
 
 	cat("\n ------------------------------------------------------------------")
 	cat("\n Processing mapped reads (MR) from dataset: ",inPath, " read strands:", FuSeq.params$readStrands)
@@ -14,7 +14,7 @@ processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feq
 	}
 	
 	if (is.null(feqInfo)){
-	  feqInfo=processFEQ(inPath,geneAnno,anntxdb,geeqMap,readStrands=FuSeq.params$readStrands,chromRef=FuSeq.params$chromRef)
+	  feqInfo=processFEQ(inPath,anntxdb,readStrands=FuSeq.params$readStrands,chromRef=FuSeq.params$chromRef)
 	  if (FuSeq.params$keepRData){
 	    cat("\n Saving MR fusion candidates ...")
 	    save(feqInfo,file=paste(FuSeq.params$outputDir,"/FuSeq_MR_feqInfo.RData",sep=""))
@@ -76,7 +76,7 @@ processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feq
 	
 	
 	### add gene types, keep only protein_coding genes later
-	dim(geneAnno)
+	#dim(geneAnno)
 	matchID=match(myFusionFinal$gene1,geneAnno[,6])
 	res=geneAnno[matchID,]
 	colnames(res)=paste(colnames(res),"1",sep="")
@@ -128,7 +128,10 @@ processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feq
 	feqRaw1=feqInfo$feqRaw[feqInfo$feqRaw$Read==1,]
 	feqRaw2=feqInfo$feqRaw[feqInfo$feqRaw$Read==2,]
 	
-	myfeqID=lapply(as.character(myFusionFinal$name12), function(mykey) feqInfo$feqFgeMap[[mykey]])
+	#myfeqID=lapply(as.character(myFusionFinal$name12), function(mykey) feqInfo$feqFgeMap[[mykey]])
+	matchID=match(as.character(myFusionFinal$name12),names(feqInfo$feqFgeMap))
+	myfeqID=feqInfo$feqFgeMap[matchID]
+	
 	myfeqIDSize=sapply(myfeqID, length)
 	myfeqIDName=unlist(apply(cbind(as.character(myFusionFinal$name12),myfeqIDSize),1, function(x) rep(x[1],x[2])))
 	myfeqID=unlist(myfeqID)
@@ -169,12 +172,14 @@ processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feq
 	cat("\n The number of remaining fge candidates: ",nrow(myFusionFinal))
 	
 	#do biological filters
-	cat("\n Filter by biological features... ")
-	bioFilter.res=doBiologicalFilter(myFusionFinal, chromRef=FuSeq.params$chromRef, onlyProteinCodingGenes=FuSeq.params$onlyProteinCodingGenes, doFilter=TRUE)
-	myFusionFinal=bioFilter.res
-	
-	cat("\n The number of remaining fge candidates: ",nrow(myFusionFinal))
+	if (doBioFilter){
+		cat("\n Filter by biological features... ")
+		bioFilter.res=doBiologicalFilter(myFusionFinal, chromRef=FuSeq.params$chromRef, onlyProteinCodingGenes=FuSeq.params$onlyProteinCodingGenes, doFilter=TRUE)
+		myFusionFinal=bioFilter.res	
+		cat("\n The number of remaining fge candidates: ",nrow(myFusionFinal))
+	}
 	#sequence similarity between two genes
+	if (!is.null(geeqMap)){
 	cat("\n Filter by sequence similarity... ")
 	seqHmlog=NULL
 	for (i in 1:nrow(myFusionFinal)){
@@ -186,7 +191,7 @@ processMappedRead <-function(inPath,geneAnno, anntxdb, geeqMap, FuSeq.params,feq
 	#do filter
 	myFusionFinal=myFusionFinal[myFusionFinal$seqHmlog==0,]
 	cat("\n The number of remaining fge candidates: ",nrow(myFusionFinal))
-	
+	}
 	
 	#detect junction breaks
 	cat("\n Detect junction breaks... ")

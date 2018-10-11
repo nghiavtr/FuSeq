@@ -1,3 +1,5 @@
+#Data: 07/09/2018
+#- Correct the headers of split reads when exporting their sequences to file
 #Date:19/05/2017
 #- Fix and clean codes
 ###################
@@ -272,26 +274,54 @@ computeReversedFusionCount <- function(myfusionTx){
 }
 
 
-computeGeneDistance <- function(myfusionTx,anntxdb,minGeneDist=1e5){
-  res1=select(anntxdb, keys=as.character(myfusionTx$gene1), columns=c("TXSTART","TXEND"), keytype = "GENEID")
-  res2=select(anntxdb, keys=as.character(myfusionTx$gene2), columns=c("TXSTART","TXEND"), keytype = "GENEID")
+computeGeneDistance <- function(myfusionTx,anntxdb){
+  #NOTE: it is meaningless for the distances between genes from two different chromosomes
   
-  minRes1=tapply(res1$TXSTART,as.character(res1$GENEID),min)
-  maxRes1=tapply(res1$TXEND,as.character(res1$GENEID),max)
-  minRes1=minRes1[match(as.character(myfusionTx$gene1),names(minRes1))]
-  maxRes1=maxRes1[match(as.character(myfusionTx$gene1),names(maxRes1))]
+  allgenes.info=select(anntxdb, keys=unique(c(as.character(myfusionTx$gene1),as.character(myfusionTx$gene2))), columns=c("TXSTART","TXEND"), keytype = "GENEID")
+  #res1=select(anntxdb, keys=as.character(myfusionTx$gene1), columns=c("TXSTART","TXEND"), keytype = "GENEID")
+  #res2=select(anntxdb, keys=as.character(myfusionTx$gene2), columns=c("TXSTART","TXEND"), keytype = "GENEID")
+  # minRes1=tapply(res1$TXSTART,as.character(res1$GENEID),min)
+  # maxRes1=tapply(res1$TXEND,as.character(res1$GENEID),max)
+  # minRes1=minRes1[match(as.character(myfusionTx$gene1),names(minRes1))]
+  # maxRes1=maxRes1[match(as.character(myfusionTx$gene1),names(maxRes1))]
+  # 
+  # minRes2=tapply(res2$TXSTART,as.character(res2$GENEID),min)
+  # maxRes2=tapply(res2$TXEND,as.character(res2$GENEID),max)
+  # minRes2=minRes2[match(as.character(myfusionTx$gene2),names(minRes2))]
+  # maxRes2=maxRes2[match(as.character(myfusionTx$gene2),names(maxRes2))]
   
-  minRes2=tapply(res2$TXSTART,as.character(res2$GENEID),min)
-  maxRes2=tapply(res2$TXEND,as.character(res2$GENEID),max)
-  minRes2=minRes2[match(as.character(myfusionTx$gene2),names(minRes2))]
-  maxRes2=maxRes2[match(as.character(myfusionTx$gene2),names(maxRes2))]
+  
+  res1=allgenes.info[match(unique(as.character(myfusionTx$gene1)),as.character(allgenes.info$GENEID)),c("GENEID","TXSTART","TXEND")]
+  res2=allgenes.info[match(unique(as.character(myfusionTx$gene2)),as.character(allgenes.info$GENEID)),c("GENEID","TXSTART","TXEND")]
+  
+  ## for gene 1
+  #sort by the increasing of TXSTART and remove duplicates
+  startMin1=res1
+  startMin1=startMin1[order(startMin1$TXSTART, decreasing=FALSE),]
+  startMin1=startMin1[!duplicated(startMin1$GENEID),]
+  minRes1=startMin1$TXSTART[match(as.character(myfusionTx$gene1),as.character(startMin1$GENEID))]
+  #sort by the decreasing of TXEND and remove duplicates
+  endMax1=res1
+  endMax1=endMax1[order(endMax1$TXEND, decreasing=TRUE),]
+  endMax1=endMax1[!duplicated(endMax1$GENEID),]
+  maxRes1=endMax1$TXEND[match(as.character(myfusionTx$gene1),as.character(endMax1$GENEID))]
+  
+  
+  ## for gene 2
+  #sort by the increasing of TXSTART and remove duplicates
+  startMin2=res2
+  startMin2=startMin2[order(startMin2$TXSTART, decreasing=FALSE),]
+  startMin2=startMin2[!duplicated(startMin2$GENEID),]
+  minRes2=startMin2$TXSTART[match(as.character(myfusionTx$gene2),as.character(startMin2$GENEID))]
+  #sort by the decreasing of TXEND and remove duplicates
+  endMax2=res2
+  endMax2=endMax2[order(endMax2$TXEND, decreasing=TRUE),]
+  endMax2=endMax2[!duplicated(endMax2$GENEID),]
+  maxRes2=endMax2$TXEND[match(as.character(myfusionTx$gene2),as.character(endMax2$GENEID))]
+  
   
   geneDist=unlist(apply(cbind(abs(minRes1-maxRes2),abs(minRes1-minRes2),abs(maxRes1-maxRes2),abs(maxRes1-minRes2)),1,min))
-  if (minGeneDist < 0) return(geneDist);
-  
-  myfusionTx$geneDist=geneDist
-  myfusionTx=myfusionTx[myfusionTx$geneDist>=minGeneDist,]
-  return(myfusionTx)
+  return(geneDist);
 }
 
 
@@ -343,7 +373,7 @@ convertReverseComplement<-function(DNAseq){
   DNAarr[Cid]="G"
   #result
   DNAseqRc=paste(DNAarr,collapse = "")
- return(DNAseqRc) 
+  return(DNAseqRc) 
 }
 
 
@@ -567,7 +597,7 @@ matchFusionReads <- function(inPath, readStrands, fastaOut, junctInfo, splitRead
       entropy5=c(entropy5,-sum(consProp5*log(consProp5)))
     }
     
- 
+    
     res=list()
     res$estBr5=estBr5
     res$estBr3=estBr3
@@ -598,7 +628,7 @@ matchFusionReads <- function(inPath, readStrands, fastaOut, junctInfo, splitRead
   fusionCandidate$consensusProp=consensusProp
   fusionCandidate$consensusErr=consensusErr
   fusionCandidate$consensusScore=fusionCandidate$consensusErr*fusionCandidate$consensusProp
-
+  
   return(list(fusionCandidate=fusionCandidate,matchInfo=matchInfo))
 }
 
@@ -687,12 +717,13 @@ exportSplitFusionReads <- function(inPath, readStrands, fastaOut, splitReads, fu
       myheader=as.character(splitReads$header[myreadID])
       rID.adj=match(myheader,fastaDat1)
       #export reads to file
-      for (j in rID.adj){
-        readHead=paste(">FuSeq__SR__",splitReads$front_hitpos[j],"__",splitReads$back_hitpos[j],"__",fName," /1",sep="")
+      for (k in 1:length(rID.adj)){
+        j=rID.adj[k]
+        readHead=paste(">FuSeq__SR__",splitReads$front_hitpos[myreadID[k]],"__",splitReads$back_hitpos[myreadID[k]],"__",fName," /1",sep="")
         writeLines(readHead,con1)
         writeLines(fastaDat1[j+1],con1)
         
-        readHead=paste(">FuSeq__SR__",splitReads$front_hitpos[j],"__",splitReads$back_hitpos[j],"__",fName," /2",sep="")
+        readHead=paste(">FuSeq__SR__",splitReads$front_hitpos[myreadID[k]],"__",splitReads$back_hitpos[myreadID[k]],"__",fName," /2",sep="")
         writeLines(readHead,con2)
         writeLines(fastaDat2[j+1],con2)
       }
@@ -1017,7 +1048,7 @@ refineJunctionBreak <-function(junctBr, anntxdb, fragmentInfo, readStrands, frag
         
       }
     }
-
+    
   }
   
   return(junctBr)
@@ -1115,9 +1146,145 @@ checkEndExon <-function(myFusionFinal, junctBr=NULL, anntxdb, readStrands,shrink
 }
 
 
+##### get information of mapped reads
+getMRinfo <-function(fusionName,inPath,feq, feqFgeMap, anntxdb, readStrands="UN", shrinkLen=3){
+  if (length(fusionName) == 0){ return(NULL) }
 
+  gene5p=sapply(fusionName,function(x) unlist(strsplit(x,"-"))[1])
+  gene3p=sapply(fusionName,function(x) unlist(strsplit(x,"-"))[2])
 
+  myFusionFinal=data.frame(fusionName=fusionName)
+  if (readStrands=="RF" || readStrands=="UN" || readStrands=="RR"){
+    myFusionFinal$gene1=gene3p
+    myFusionFinal$gene2=gene5p
+    myFusionFinal$name12=paste(myFusionFinal$gene1, myFusionFinal$gene2,sep="-")    
+  }else{
+    myFusionFinal$gene1=gene5p
+    myFusionFinal$gene2=gene3p
+    myFusionFinal$name12=paste(myFusionFinal$gene1, myFusionFinal$gene2,sep="-")    
+  }  
+  myFusionFinal$fusionName=as.character(myFusionFinal$fusionName)
+  ##### input fusion reads
+  #load fusion reads
+  cat("\n Get mapped fusion reads")
+  frfiles=list.files(inPath,paste(readStrands,"_fusionMappedReadsChunk_*",sep=""))
+  fusionRead=NULL;
+  fsizes=NULL;
+  for (i in 1:length(frfiles)){
+    tmpDat=read.csv(paste(inPath,"/",frfiles[i],sep=""), header =FALSE, sep="\t")
+    fusionRead=rbind(fusionRead,tmpDat)
+    fsizes=c(fsizes,nrow(tmpDat))
+  }
+  fsizeLadder=cumsum(fsizes)
+  colnames(fusionRead)=c("read1","read2","read1Pos","read2Pos","seq1Pos","seq2Pos","seq1Len","seq2Len")
+  #dim(fusionRead)
+  cat("\n The number of mapped fusion reads: ",nrow(fusionRead))
+  fre1=as.character(fusionRead$read1)
+  fre1=trimws(fre1)
+  fre2=as.character(fusionRead$read2)
+  fre2=trimws(fre2)
+  read1Pos=as.character(fusionRead$read1Pos)
+  read2Pos=as.character(fusionRead$read2Pos)
+  seq1Pos=as.character(fusionRead$seq1Pos)
+  seq2Pos=as.character(fusionRead$seq2Pos)
+  seq1Len=as.character(fusionRead$seq1Len)
+  seq2Len=as.character(fusionRead$seq2Len)
+    #load fragment info - this is not neccessary thi moment
+  fragmentInfo=read.csv(paste(inPath,"/fragmentInfo.txt",sep=""), header =TRUE, sep="\t")
+  readLen=fragmentInfo[1,1]
+  #load the feq file
+  feqRaw=read.csv(paste(inPath,"/feq_",readStrands,".txt",sep=""), header =TRUE, sep="\t")
+  # #Keep only reads and feqs relating to myFusionFinal
+  # allTx=select(anntxdb, keys=unique(c(as.character(myFusionFinal$gene5p),as.character(myFusionFinal$gene3p))), columns=c("TXNAME"), keytype = "GENEID")
+  # feqRaw=feqRaw[as.character(feqRaw$Transcript) %in% as.character(allTx$TXNAME),]
+  feqRead1=feqRaw[feqRaw$Read==1,]
+  feqRead2=feqRaw[feqRaw$Read==2,]
+  #get feq-fge map
+  # feqFgeMap=feqInfo$feqFgeMap
+  # feq=feqInfo$feq
+  cat("\n Preparing some information ...")
+  feqFtxMap1=tapply(as.character(feqRead1$Transcript),feqRead1$Feq,c)
+  feqRead1Name=unlist(lapply(feqFtxMap1,function(x) paste(x,collapse =" ")))
+  feqFtxMap2=tapply(as.character(feqRead2$Transcript),feqRead2$Feq,c)
+  feqRead2Name=unlist(lapply(feqFtxMap2,function(x) paste(x,collapse =" ")))
+  
+  read1Pos=lapply(read1Pos,function(x) as.integer(unlist(strsplit(x," "))))
+  read2Pos=lapply(read2Pos,function(x) as.integer(unlist(strsplit(x," "))))
+  seq1Pos=lapply(seq1Pos,function(x) as.integer(unlist(strsplit(x," "))))
+  seq2Pos=lapply(seq2Pos,function(x) as.integer(unlist(strsplit(x," "))))
+  seq1Len=lapply(seq1Len,function(x) as.integer(unlist(strsplit(x," "))))
+  seq2Len=lapply(seq2Len,function(x) as.integer(unlist(strsplit(x," "))))
+  #get some annotations
+  txToGene=select(anntxdb, keys=unique(as.character(feqRaw[,1])), columns=c("GENEID","TXCHROM"), keytype = "TXNAME")
+  cat("\n Detect positions of junction breaks")
+  brpos5.start=brpos5.end=brpos3.start=brpos3.end=NULL
+  genebrpos5.start=genebrpos5.end=genebrpos3.start=genebrpos3.end=NULL
+  fragmentMean=fragmentSd=fragmentNum=fragmentTest=NULL;
+  tx5LenMean=tx3LenMean=tx5LenSd=tx3LenSd=NULL;
+  tx5GapMean=tx3GapMean=tx5GapSd=tx3GapSd=NULL;
+  flen5=flen3=NULL;
+  splitRNum5=splitRNum3=exNum1=exNum2=NULL;
+  nondupCount=NULL;
+  
+  junctInfo=list();
+  for (i in 1:nrow(myFusionFinal)){
+    fgeName=as.character(myFusionFinal$name12)[i]
 
+    gene1=as.character(myFusionFinal$gene1[i])
+    gene2=as.character(myFusionFinal$gene2[i])
+    myfeqID=feqFgeMap[[fgeName]]
 
+    readL.seqLen=readR.seqLen=readID=readL.chrPos=readR.chrPos=readL.Pos=readR.Pos=readL.GenePos=readR.GenePos=readL.tx=readR.tx=list();
+    readL.chrReadPos=readR.chrReadPos=readR.ReadPos=readL.ReadPos=list();
+    readL.ExonID=readR.ExonID=list();
 
+    for (j in 1:length(myfeqID)){
+      feqName=names(feq[myfeqID[j]])
+      if (length(feqName)==0) next()
+      #keepID=which(fre1==feqRead1Name[myfeqID[j]] & fre2==feqRead2Name[myfeqID[j]])
+      keepID1=which(fre1==feqRead1Name[myfeqID[j]])
+      keepID=keepID1[which(fre2[keepID1]==feqRead2Name[myfeqID[j]])]
 
+      readID[[feqName]]=keepID
+      
+      xl=unlist(feqFtxMap1[myfeqID[j]])
+      xr=unlist(feqFtxMap2[myfeqID[j]])
+
+      IDl=which(txToGene[match(xl,txToGene$TXNAME),]$GENEID==gene1)
+      IDr=which(txToGene[match(xr,txToGene$TXNAME),]$GENEID==gene2)
+      #select only one because the others will locate to the same posistion
+      posl=IDl[1]
+      posr=IDr[1]
+
+      readposl=sapply(read1Pos[keepID],function(x) x[posl])
+      readposr=sapply(read2Pos[keepID],function(x) x[posr])
+      txposl=sapply(seq1Pos[keepID],function(x) x[posl])
+      txposr=sapply(seq2Pos[keepID],function(x) x[posr])
+
+      txSeqlenl=sapply(seq1Len[keepID],function(x) x[posl])
+      txSeqlenr=sapply(seq2Len[keepID],function(x) x[posr])
+
+      #reduce length of match kmer shrinkLen=3 or prop=0.25^3=0.015625
+      readposl=readposl+shrinkLen
+      readposr=readposr+shrinkLen
+      txposl=txposl+shrinkLen
+      txposr=txposr+shrinkLen
+      txSeqlenl=txSeqlenl-shrinkLen
+      txSeqlenr=txSeqlenr-shrinkLen
+      
+      #save the information
+      readL.Pos[[feqName]]=txposl
+      readR.Pos[[feqName]]=txposr
+      readL.ReadPos[[feqName]]=readposl
+      readR.ReadPos[[feqName]]=readposr
+      readL.seqLen[[feqName]]=txSeqlenl
+      readR.seqLen[[feqName]]=txSeqlenr      
+
+    }
+    res=list(readL.ReadPos=readL.ReadPos,readR.ReadPos=readR.ReadPos,readID=readID)
+    if (length(res$readID)>0) junctInfo[[myFusionFinal$fusionName[i]]]=res;
+  }
+  return(list(myFusionFinal=myFusionFinal,junctInfo=junctInfo,fsizeLadder=fsizeLadder))
+  }
+  
+  

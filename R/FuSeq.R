@@ -56,7 +56,7 @@ if (is.na(paramsFn)){
 	FuSeq.params$maxSharedCount=5e-2
 	FuSeq.params$minGeneDist=1e5
 	FuSeq.params$minJunctionDist=1e5
-	FuSeq.params$maxInvertedFusionCount=0.01
+	FuSeq.params$maxInvertedFusionCount=0
 	FuSeq.params$maxMRfusionFc=2
 	FuSeq.params$maxMRfusionNum=2
 	FuSeq.params$sgtMRcount=10
@@ -109,6 +109,13 @@ if (validatedCommand){
 	cat("\n keepRData=",FuSeq.params$keepRData)
 	cat("\n exportFasta=",FuSeq.params$exportFasta)	
 }
+
+fragDistFn=paste(inputFeqDir,"/fragmentDist.txt",sep="")
+if (!file.exists(fragDistFn)) {
+	cat("There is no fragmentDist.txt file, your input sequencing data are probably too small. Stop!")
+	validatedCommand=FALSE
+}
+
 cat("\n-------------------------\n")
 
 if (validatedCommand){
@@ -132,7 +139,7 @@ if (validatedCommand){
 	myFusionOut=NULL;
 	
 	FuSeq.MR=processMappedRead(inPath,geneAnno=geneAnno,  anntxdb=anntxdb, geeqMap=geeqMap,FuSeq.params=FuSeq.params)
-	FuSeq.SR=processSplitRead(inPath,geneAnno=geneAnno, anntxdb=anntxdb, geeqMap=geeqMap,FuSeq.params=FuSeq.params, txFastaFile=txFastaFile)
+	FuSeq.SR=processSplitRead(inPath,geneAnno=geneAnno, anntxdb=anntxdb, FuSeq.params=FuSeq.params, txFastaFile=txFastaFile)
 	
 	FuSeq.MR.postPro=postProcessMappedRead(inPath, anntxdb, FuSeq.SR, FuSeq.MR, FuSeq.params)
 	FuSeq.SR.postPro=postProcessSplitRead(inPath, anntxdb, FuSeq.SR, FuSeq.MR, txFastaFile, FuSeq.params)
@@ -145,15 +152,26 @@ if (validatedCommand){
 	myFusionFinal=FuSeq.integration$myFusionFinal
 	
 	if (nrow(myFusionFinal)==0){
-	  myFusionExport= "# No fusion genes existing"
-	  write.table(myFusionExport, file=outputDir, col.names=FALSE, row.names = FALSE,quote = FALSE, sep="\t")
+		cat("\n No final fusion-gene candidates existing. It might be interesting to further investigate other SR and MR fusion candidates in FuSeq_process.RData.")
+		myFusionExport= "# No final fusion-gene candidates existing. It might be interesting to further investigate other SR and MR fusion candidates in FuSeq_process.RData."
+		write.table(myFusionExport, file=paste(outputDir,"/fusions.FuSeq",sep=""), col.names=FALSE, row.names = FALSE,quote = FALSE, sep="\t")
+	  	#keep all RData
+		if (FuSeq.params$keepRData){
+		  cat("\n Saving all data of FuSeq process...")
+		  save(inPath,outputDir, myFusionFinal,myFusionExport,FuSeq.params, FuSeq.MR, FuSeq.SR, FuSeq.MR.postPro, FuSeq.SR.postPro,FuSeq.integration, file=paste(outputDir,"/FuSeq_process.RData",sep=""))
+		}
 	}  else{
-	  myFusionOut=myFusionFinal
+	  	myFusionOut=myFusionFinal
 		myFusionOut=myFusionOut[order(myFusionOut$score, decreasing = TRUE),]
 		
-		myFusionExport=myFusionOut[,c("gene5","chrom5p","strand5p","brpos5.start","brpos5.end","gene3","chrom3p","strand3p","brpos3.start","brpos3.end","fusionName","supportRead","score")]
+		myFusionExport=myFusionOut[,c("gene5","chrom5p","strand5p","brpos5.start","brpos5.end","gene3","chrom3p","strand3p","brpos3.start","brpos3.end","fusionName","SR","MR","supportRead","score")]
 		
-		colnames(myFusionExport)=c("gene5","chrom5","strand5","brpos5.start","brpos5.end","gene3","chrom3","strand3","brpos3.start","brpos3.end","fusionName","supportRead","score")
+		colnames(myFusionExport)=c("gene5","chrom5","strand5","brpos5.start","brpos5.end","gene3","chrom3","strand3","brpos3.start","brpos3.end","fusionName","SR.passed","MR.passed","supportRead","score")
+		#get HGNC names of genes
+		myFusionExport$HGNC5=hgncName$hgnc_symbol[match(myFusionExport$gene5,hgncName$ensembl_gene_id)]
+		myFusionExport$HGNC3=hgncName$hgnc_symbol[match(myFusionExport$gene3,hgncName$ensembl_gene_id)]
+    #reorder
+		myFusionExport=myFusionExport[,c("gene5","chrom5","strand5","brpos5.start","brpos5.end","gene3","chrom3","strand3","brpos3.start","brpos3.end","fusionName","HGNC5","HGNC3","SR.passed","MR.passed","supportRead","score")]
 		
 		#Detect extra information here
 		myFusionExport$info=rep("",nrow(myFusionExport))
@@ -176,12 +194,16 @@ if (validatedCommand){
 		if (FuSeq.params$exportFasta){
 		  cat("\n Export supporing read sequences to files...")
 		  fastaOut=paste(outputDir,"/FuSeq_",sep="")
-  		exportMappedFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, junctInfo=FuSeq.MR$junctBr$junctInfo, fusionName=as.character(myFusionFinal$fusionName),fsizeLadder=FuSeq.MR$junctBr$fsizeLadder)
-  		exportSplitFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, splitReads=FuSeq.SR$splitReads, fusionName=as.character(myFusionFinal$fusionName))
+  		#exportMappedFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, junctInfo=FuSeq.MR$junctBr$junctInfo, fusionName=as.character(myFusionFinal$fusionName),fsizeLadder=FuSeq.MR$junctBr$fsizeLadder)
+		#exportSplitFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, splitReads=FuSeq.SR$splitReads, fusionName=as.character(myFusionFinal$fusionName))
+		MRinfo=getMRinfo(fusionName=as.character(myFusionFinal$fusionName),inPath=inPath,feq=FuSeq.MR$feqInfo$feq, feqFgeMap=FuSeq.MR$feqInfo$feqFgeMap, anntxdb=anntxdb,readStrands=FuSeq.params$readStrands)
+		exportMappedFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, junctInfo=MRinfo$junctInfo, fusionName=as.character(myFusionFinal$fusionName),fsizeLadder=FuSeq.MR$junctBr$fsizeLadder)
+  		exportSplitFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, splitReads=FuSeq.SR$fusionGene, fusionName=as.character(myFusionFinal$fusionName))
 		}		
 		
 	}
 
-cat("\n Done! \n")
+	cat("\n Done! \n")
 }
+
 

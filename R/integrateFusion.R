@@ -120,8 +120,15 @@ integrateFusion <-function(myFusionFinal.MR, myFusionFinal.SR, FuSeq.params, fra
   }
   
   myFusionFinal$MR=myFusionFinal$SR=0
-  myFusionFinal$SR[which(!is.na(match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.SR$fusionName))))]=1
-  myFusionFinal$MR[which(!is.na(match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.MR$fusionName))))]=1
+  #myFusionFinal$SR[which(!is.na(match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.SR$fusionName))))]=1
+  #myFusionFinal$MR[which(!is.na(match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.MR$fusionName))))]=1  
+  matchID=match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.SR$fusionName))
+  pick=which(!is.na(matchID))
+  myFusionFinal$SR[pick]=myFusionFinal.SR$supportCount[matchID[pick]]
+  matchID=match(as.character(myFusionFinal$fusionName),as.character(myFusionFinal.MR$fusionName))
+  pick=which(!is.na(matchID))
+  myFusionFinal$MR[pick]=myFusionFinal.MR$supportCount[matchID[pick]]
+
   
   return(list(myFusionFinal=myFusionFinal,myFusionFinal.SR=myFusionFinal.SR,myFusionFinal.MR=myFusionFinal.MR))
 }
