@@ -152,9 +152,10 @@ if (validatedCommand){
 	myFusionFinal=FuSeq.integration$myFusionFinal
 	
 	if (nrow(myFusionFinal)==0){
-		cat("\n No final fusion-gene candidates existing. It might be interesting to further investigate other SR and MR fusion candidates in FuSeq_process.RData.")
-		myFusionExport= "# No final fusion-gene candidates existing. It might be interesting to further investigate other SR and MR fusion candidates in FuSeq_process.RData."
+		cat("\n No final fusion-gene candidates existing. If keepRData=TRUE in the parameter setting, it might be interesting to further investigate other SR and MR fusion candidates in FuSeq_process.RData.")
+		myFusionExport= "# No final fusion-gene candidates existing. If keepRData=TRUE in the parameter setting, it might be interesting to further investigate other SR and MR fusion candidates in FuSeq_process.RData."
 		write.table(myFusionExport, file=paste(outputDir,"/fusions.FuSeq",sep=""), col.names=FALSE, row.names = FALSE,quote = FALSE, sep="\t")
+	  	save(FuSeq.params, inPath, FuSeq.integration, file=paste(outputDir,"/FuSeq_logs.RData",sep=""))
 	  	#keep all RData
 		if (FuSeq.params$keepRData){
 		  cat("\n Saving all data of FuSeq process...")
@@ -164,14 +165,21 @@ if (validatedCommand){
 	  	myFusionOut=myFusionFinal
 		myFusionOut=myFusionOut[order(myFusionOut$score, decreasing = TRUE),]
 		
-		myFusionExport=myFusionOut[,c("gene5","chrom5p","strand5p","brpos5.start","brpos5.end","gene3","chrom3p","strand3p","brpos3.start","brpos3.end","fusionName","SR","MR","supportRead","score")]
-		
-		colnames(myFusionExport)=c("gene5","chrom5","strand5","brpos5.start","brpos5.end","gene3","chrom3","strand3","brpos3.start","brpos3.end","fusionName","SR.passed","MR.passed","supportRead","score")
-		#get HGNC names of genes
-		myFusionExport$HGNC5=hgncName$hgnc_symbol[match(myFusionExport$gene5,hgncName$ensembl_gene_id)]
-		myFusionExport$HGNC3=hgncName$hgnc_symbol[match(myFusionExport$gene3,hgncName$ensembl_gene_id)]
-    #reorder
-		myFusionExport=myFusionExport[,c("gene5","chrom5","strand5","brpos5.start","brpos5.end","gene3","chrom3","strand3","brpos3.start","brpos3.end","fusionName","HGNC5","HGNC3","SR.passed","MR.passed","supportRead","score")]
+		selectedColumns=c("gene5","chrom5p","strand5p","brpos5.start","exonBound5p","gene3","chrom3p","strand3p","brpos3.start","exonBound3p","fusionName","SR","MR","supportRead","score")
+
+		myFusionExport=myFusionOut[,selectedColumns]
+		#rename the columns: brpos5.start --> cds.brpos5.start (break point in coding region) and exonBound5p --> brpos5.start (breaking point in exon boundary), similarly to the 3 prime side
+		colnames(myFusionExport)=c("gene5","chrom5","strand5","cds.brpos5.start","brpos5","gene3","chrom3","strand3","cds.brpos3.start","brpos3","fusionName","SR.passed","MR.passed","supportRead","score")
+		#get symbol names of genes
+		if (exists("hgncName")){
+			myFusionExport$symbol5=hgncName$hgnc_symbol[match(myFusionExport$gene5,hgncName$ensembl_gene_id)]
+			myFusionExport$symbol3=hgncName$hgnc_symbol[match(myFusionExport$gene3,hgncName$ensembl_gene_id)]    
+		}else{
+			myFusionExport$symbol5=""
+			myFusionExport$symbol3=""
+		}
+		#reorder the column names
+		myFusionExport=myFusionExport[,c("gene5","chrom5","strand5","brpos5","cds.brpos5.start","gene3","chrom3","strand3","brpos3","cds.brpos3.start","fusionName","symbol5","symbol3","SR.passed","MR.passed","supportRead","score")]
 		
 		#Detect extra information here
 		myFusionExport$info=rep("",nrow(myFusionExport))
@@ -183,6 +191,7 @@ if (validatedCommand){
 		myFusionExport$info[myID]=paste(myFusionExport$info[myID],"ribonucleoprotein, ",sep="")
 
 		write.table(myFusionExport, file=paste(outputDir,"/fusions.FuSeq",sep=""), col.names=TRUE, row.names = FALSE,quote = FALSE, sep="\t")
+		save(FuSeq.params, inPath, FuSeq.integration, file=paste(outputDir,"/FuSeq_logs.RData",sep=""))
 		#####
 		#keep all RData
 		if (FuSeq.params$keepRData){
@@ -192,13 +201,11 @@ if (validatedCommand){
 		
 		##### Export fasta sequence
 		if (FuSeq.params$exportFasta){
-		  cat("\n Export supporing read sequences to files...")
-		  fastaOut=paste(outputDir,"/FuSeq_",sep="")
-  		#exportMappedFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, junctInfo=FuSeq.MR$junctBr$junctInfo, fusionName=as.character(myFusionFinal$fusionName),fsizeLadder=FuSeq.MR$junctBr$fsizeLadder)
-		#exportSplitFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, splitReads=FuSeq.SR$splitReads, fusionName=as.character(myFusionFinal$fusionName))
-		MRinfo=getMRinfo(fusionName=as.character(myFusionFinal$fusionName),inPath=inPath,feq=FuSeq.MR$feqInfo$feq, feqFgeMap=FuSeq.MR$feqInfo$feqFgeMap, anntxdb=anntxdb,readStrands=FuSeq.params$readStrands)
-		exportMappedFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, junctInfo=MRinfo$junctInfo, fusionName=as.character(myFusionFinal$fusionName),fsizeLadder=FuSeq.MR$junctBr$fsizeLadder)
-  		exportSplitFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, splitReads=FuSeq.SR$fusionGene, fusionName=as.character(myFusionFinal$fusionName))
+			cat("\n Export supporing read sequences to files...")
+			fastaOut=paste(outputDir,"/FuSeq_",sep="")
+			MRinfo=getMRinfo(fusionName=as.character(myFusionFinal$fusionName),inPath=inPath,feq=FuSeq.MR$feqInfo$feq, feqFgeMap=FuSeq.MR$feqInfo$feqFgeMap, anntxdb=anntxdb,readStrands=FuSeq.params$readStrands)
+			exportMappedFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, junctInfo=MRinfo$junctInfo, fusionName=as.character(myFusionFinal$fusionName),fsizeLadder=FuSeq.MR$junctBr$fsizeLadder)
+				exportSplitFusionReads(inPath, readStrands=FuSeq.params$readStrands, fastaOut=fastaOut, splitReads=FuSeq.SR$fusionGene, fusionName=as.character(myFusionFinal$fusionName))
 		}		
 		
 	}

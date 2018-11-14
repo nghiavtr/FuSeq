@@ -24,16 +24,21 @@ doBiologicalFilter<-function(fgeList, chromRef=paste("",c(1:22,"X","Y"),sep=""),
     myFusionFinal=myFusionFinal[myFusionFinal$paralog==0,]
   }
   
-  gene5=as.character(myFusionFinal$gene1)
-  res <- hgncName[match(gene5,as.character(hgncName$ensembl_gene_id)) ,]
-  res=res[res$chromosome_name%in%chromRef,]
-  matchID=match(gene5,res$ensembl_gene_id)
-  myFusionFinal$gene1_ucsc=res$hgnc_symbol[matchID]
-  gene3=as.character(myFusionFinal$gene2)
-  res <- hgncName[match(gene3,as.character(hgncName$ensembl_gene_id)) ,]
-  res=res[res$chromosome_name%in%chromRef,]
-  matchID=match(gene3,res$ensembl_gene_id)
-  myFusionFinal$gene2_ucsc=res$hgnc_symbol[matchID]
+  if (exists("hgncName")){
+    gene5=as.character(myFusionFinal$gene1)
+    res <- hgncName[match(gene5,as.character(hgncName$ensembl_gene_id)) ,]
+    res=res[res$chromosome_name%in%chromRef,]
+    matchID=match(gene5,res$ensembl_gene_id)
+    myFusionFinal$gene1_ucsc=res$hgnc_symbol[matchID]
+    gene3=as.character(myFusionFinal$gene2)
+    res <- hgncName[match(gene3,as.character(hgncName$ensembl_gene_id)) ,]
+    res=res[res$chromosome_name%in%chromRef,]
+    matchID=match(gene3,res$ensembl_gene_id)
+    myFusionFinal$gene2_ucsc=res$hgnc_symbol[matchID]
+  }else{
+    myFusionFinal$gene1_ucsc=""
+    myFusionFinal$gene2_ucsc=""
+  }
    
   #filter a fusion made by a gene and its read-through genes
   keepID=unlist(lapply(c(1:nrow(myFusionFinal)), function(x){

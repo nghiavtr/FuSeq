@@ -17,6 +17,10 @@ set ( TXINDEXER_MAIN_SRCS
 TxIndexer.cpp
 )
 
+set ( GENTC_MAIN_SRCS 
+GenTC.cpp
+)
+
 #set ( UNIT_TESTS_SRCS
 #    ${GAT_SOURCE_DIR}/tests/UnitTests.cpp
 #)
@@ -29,6 +33,7 @@ set (SAILFISH_LIB_SRCS
 VersionChecker.cpp
 #SailfishIndexer.cpp
 TxIndexer.cpp
+GenTC.cpp
 #SailfishQuantify.cpp
 FuSeq.cpp
 SailfishUtils.cpp
@@ -37,6 +42,7 @@ LibraryFormat.cpp
 TranscriptGroup.cpp
 CollapsedEMOptimizer.cpp
 ExportFeq.cpp
+ExportEq.cpp
 CollapsedGibbsSampler.cpp
 EmpiricalDistribution.cpp
 #HDF5Writer.cpp
@@ -111,6 +117,9 @@ add_library(sailfish_core STATIC ${SAILFISH_LIB_SRCS} )
 add_executable(FuSeq ${FUSEQ_MAIN_SRCS})
 # Build the TxIndexer executable
 add_executable(TxIndexer ${TXINDEXER_MAIN_SRCS})
+# Build the GenTC executable
+add_executable(GenTC ${GENTC_MAIN_SRCS})
+
 #for FuSeq
 
 # Build the Sailfish executable
@@ -173,6 +182,24 @@ target_link_libraries(TxIndexer
     #${HDF5_LIBRARIES}
     ${FAST_MALLOC_LIB}
 )
+
+target_link_libraries(GenTC 
+    sailfish_core 
+    ${PTHREAD_LIB}
+    ${Boost_LIBRARIES} 
+    gff
+    ${ZLIB_LIBRARY} 
+    ${SUFFARRAY_LIB}
+    ${SUFFARRAY64_LIB}
+    ${GAT_SOURCE_DIR}/external/install/lib/libjellyfish-2.0.a 
+    m
+    ${TBB_LIBRARIES}
+    ${LIBSAILFISH_LINKER_FLAGS} 
+    ${NON_APPLECLANG_LIBS}
+    #${HDF5_LIBRARIES}
+    ${FAST_MALLOC_LIB}
+)
+
 #for FuSeq
 
 ## Link the executable
@@ -219,7 +246,15 @@ if (APPLE)
         COMMAND install_name_tool -change libtbbmalloc.dylib @rpath/libtbbmalloc.dylib ${GAT_SOURCE_DIR}/build/src/TxIndexer
         COMMAND install_name_tool -change libtbbmalloc_proxy.dylib @rpath/libtbbmalloc_proxy.dylib ${GAT_SOURCE_DIR}/build/src/TxIndexer
         COMMAND install_name_tool -add_rpath  ${GAT_SOURCE_DIR}/external/install/lib ${GAT_SOURCE_DIR}/build/src/TxIndexer
-        )        
+        )     
+        add_custom_command(TARGET GenTC 
+        POST_BUILD
+        COMMAND install_name_tool -change libtbb.dylib @rpath/libtbb.dylib ${GAT_SOURCE_DIR}/build/src/GenTC
+        COMMAND install_name_tool -change libtbbmalloc.dylib @rpath/libtbbmalloc.dylib ${GAT_SOURCE_DIR}/build/src/GenTC
+        COMMAND install_name_tool -change libtbbmalloc_proxy.dylib @rpath/libtbbmalloc_proxy.dylib ${GAT_SOURCE_DIR}/build/src/GenTC
+        COMMAND install_name_tool -add_rpath  ${GAT_SOURCE_DIR}/external/install/lib ${GAT_SOURCE_DIR}/build/src/GenTC
+        )
+
 #	add_custom_command(TARGET unitTests
 #    	    POST_BUILD
 #	    COMMAND install_name_tool -change libtbb.dylib @rpath/libtbb.dylib ${GAT_SOURCE_DIR}/build/src/unitTests
@@ -278,6 +313,11 @@ install(TARGETS TxIndexer sailfish_core
                 RUNTIME DESTINATION bin 
                 LIBRARY DESTINATION lib
                 ARCHIVE DESTINATION lib
+        )
+install(TARGETS GenTC sailfish_core
+                RUNTIME DESTINATION bin 
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
         )        
 #install(TARGETS unitTests
 #    RUNTIME DESTINATION tests
@@ -301,3 +341,4 @@ install(
 #include(InstallRequiredSystemLibraries)
 #add_test( NAME unit_tests COMMAND ${CMAKE_COMMAND} -DTOPLEVEL_DIR=${CMAKE_INSTALL_PREFIX} -P ${GAT_SOURCE_DIR}/cmake/UnitTests.cmake )
 #add_test( NAME simple_test COMMAND ${CMAKE_COMMAND} -DTOPLEVEL_DIR=${CMAKE_INSTALL_PREFIX} -P ${GAT_SOURCE_DIR}/cmake/SimpleTest.cmake )
+
