@@ -44,8 +44,8 @@ Current FuSeq version was tested on the human transcriptome with ensembl annotat
 - Gtf annotation of transcripts (ensembl website) [GRCh37.75 gtf annotation](http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz)
 - RData annotation file (FuSeq website): [GRCh37.75 RData annotation](https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData)
 
-We also prepare annotation RData files for several annotations from Ensembl (ensembl.org). However, **before running FuSeq, users should clean the version information from the transcript names and gene names as described in Section 7**.
-- [Homo sapiens version GRCh38.94](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/Homo_sapiens.GRCh38.94.txAnno.RData)
+We also prepare annotation RData files for several annotations from Ensembl (ensembl.org) and example codes to build the annotation RData file in folder [*createAnno*](https://github.com/nghiavtr/FuSeq/tree/master/createAnno). **Please see Section 7 for further information.**
+- [Homo sapiens version GRCh38.94](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/Homo_sapiens.GRCh38.94.txAnno.RData): *However, before running FuSeq for this annotation, users should clean the version information from the transcript names and gene names as described in Section 7*.
 - [Arabidopsis thaliana version TAIR10.41](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/Arabidopsis_thaliana.TAIR10.41.txAnno.RData)
 
 ### Versions
@@ -181,8 +181,10 @@ In this section, we describe details how to create a annotation RData for your o
 - FuSeq: version 1.1.0 or later
 
 
-#### Remove version information from transcript names and gene names
-In some recent annotations (e.g., GRCh38 of human), versions are also included in the transcript and gene names of the fasta file (cdna) of transcript sequences. However, it is not consistent with the corresponding gtf file where there are no version information in the names. To solve this issue, we exclude the version information in transcript names and gene names from the cdna fasta file (transcripts.fa) using excludeTxVersion.R:
+#### Concordances of transcript/gene names in the fasta file and the gft file of Ensembl annotation
+*Please check whether transcript names and gene names in your fasta cdna file and gft file are consistent.*
+
+In some recent annotations from Ensembl (e.g., GRCh38 of human), versions are also included in the transcript and gene names of the fasta file (cdna) of transcript sequences. However, it is not consistent with the corresponding gtf file where there are no version information in the names. To solve this issue, we exclude the version information in transcript names and gene names from the cdna fasta file (transcripts.fa) using excludeTxVersion.R:
 
 ```sh
 Rscript FuSeq_home/R/excludeTxVersion.R /path/to/transcripts.fa /path/to/transcripts.clean.fa
@@ -190,8 +192,8 @@ Rscript FuSeq_home/R/excludeTxVersion.R /path/to/transcripts.fa /path/to/transcr
 
 The cdna fasta file after removing version information (transcripts.clean.fa) should be used for both indexing step and/or creating RData annotation file in downstream.
 
-#### Generate the annotation RData file
-We use the transcripts.clean.fa from the previous step to generate the annoatation RData file. This includes three main steps:
+#### Generation of an annotation RData file
+We use the transcripts.fa (or the transcripts.clean.fa from the previous step, if the transcript/gene names are not consistent) to generate the annotation RData file. This includes three main steps:
 
 1) extract information of transcripts such as transcript name, gene name, chromosom etc.
 - The information is extracted from the head of sequences in the clean cdna fasta file (transcripts.clean.fa).
@@ -213,8 +215,13 @@ For simplicity, in this manual, we use the R-package "polyester" to simulate dat
 - check to use a correct attribute containing gene paralog when using biomaRt
 - skip the codes for hgncName, ribSubunitDb, mitoTransDb and ribonuproDb if their information is not available
 
-#### Example codes for annotations of an animal and a plant
-We also prepare example codes in folder *createAnno* to create a new supporting annotation RData file for 1) the annotation from an animal (Homo sapiens version GRCh38.94) and the annotation from a plant (Arabidopsis thaliana version TAIR10.41). Note that "polyester" R-package might require a huge of memory for generating the simulated data for big transcriptome. In our implementation, we assign a memory of 32GB for TAIR10.41 and 64GB for GRCh38.94.
+#### Example codes for creating an annotation RData
+We also prepare example codes in folder *createAnno* to create a new supporting annotation RData file for 
+
+1) the annotation from an animal (Homo sapiens version GRCh38.94) with inconsistent transcript/gene names between fasta file and gtf file
+2) the annotation from a plant (Arabidopsis thaliana version TAIR10.41) with consistent transcript/gene names.
+
+Note that "polyester" R-package might require a huge of memory for generating the simulated data for big transcriptome. In our implementation, we assign a memory of 32GB for TAIR10.41 and 64GB for GRCh38.94.
 
 ## 8. Pratical examples of using FuSeq
 
