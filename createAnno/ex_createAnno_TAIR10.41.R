@@ -8,7 +8,10 @@
 ##### Some remarks in Step 2 before use:
 # 1) check to use the correct dataset and version from ensembl database
 # 2) check to use the correct attribute containing gene paralog when using biomaRt
-# 3) Step 2.2 can be IGNORED for some species that do not contain information of hgncName, ribSubunitDb, mitoTransDb, ribonuproDb
+# 3) step 2.2 can be IGNORED for some species that do not contain information of hgncName, ribSubunitDb, mitoTransDb, ribonuproDb
+# 4) check the concordance between transcript/gene names in cdna fasta file and gtf file, see line 67 of "remove version of gene/transcript"
+
+
 
 args = commandArgs(trailingOnly=TRUE)
 cdnaFn=args[1]
@@ -61,9 +64,10 @@ geneName=unlist(lapply(txInfo, function(x) {
 }))
 
 
-#remove version of gene/transcript
-txName=unlist(lapply(txName, function(x) unlist(strsplit(x,"\\."))[1]))
-geneName=unlist(lapply(geneName, function(x) unlist(strsplit(x,"\\."))[1]))
+##remove version of gene/transcript
+## This step need to be done if there are a inconsistency between transcript/gene names in cdna fasta file and gtf file. Homo_sapiens.GRCh38.94 is a typical example.
+#txName=unlist(lapply(txName, function(x) unlist(strsplit(x,"\\."))[1]))
+#geneName=unlist(lapply(geneName, function(x) unlist(strsplit(x,"\\."))[1]))
 
 #put them together
 txAnno=cbind(txName,cdnaType,chrInfo,geneType,txType,geneName)
@@ -145,3 +149,4 @@ length(geeqMap)
 save(geeq,eqgeMap,geeqMap,txAnno,geneAnno,geneParalog,file=txAnnoFn)
 
 rm(list=ls())
+
