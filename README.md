@@ -76,6 +76,8 @@ bash configure.sh
 export LD_LIBRARY_PATH=/path/to/FuSeq_v1.1.0_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
 export PATH=/path/to/FuSeq_v1.1.0_linux_x86-64/linux/bin:$PATH
 ```
+- **For Ubuntu users (Ubuntu 16 and Ubuntu 18):** if getting errors about librt.so.1: fixed by simply removing the librt.so.1 from folder "linux/lib".
+
 If you want to build FuSeq from sources:
 - Download FuSeq from [FuSeq website](https://github.com/nghiavtr/FuSeq) and move to *FuSeq_home* directory
 ```sh
@@ -242,6 +244,8 @@ cd ..
 export LD_LIBRARY_PATH=$PWD/FuSeq_v1.1.0_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
 export PATH=$PWD/FuSeq_v1.1.0_linux_x86-64/linux/bin:$PATH
 ```
+- **For Ubuntu users (Ubuntu 16 and Ubuntu 18):** if getting errors about librt.so.1: fixed by simply removing the librt.so.1 from folder "linux/lib".
+
 ### 8.2. Download and prepare the reference files
 #### Download the fasta and gtf of transcripts
 ```sh
