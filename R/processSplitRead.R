@@ -87,10 +87,10 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params)
   geneDist=computeGeneDistance(fusionGene,anntxdb)
   fusionGene$geneDist=geneDist
   
-  if (FuSeq.params$keepRData){
-    cat("\n Saving the full set of SR fusion candidates ...")
-    save(fusionGene,file=paste(FuSeq.params$outputDir,"/FuSeq_SR_fusionGene_full.RData",sep=""))
-  }
+#  if (FuSeq.params$keepRData){
+#    cat("\n Saving the full set of SR fusion candidates ...")
+#    save(fusionGene,file=paste(FuSeq.params$outputDir,"/FuSeq_SR_fusionGene_full.RData",sep=""))
+#  }
   
   
   myFusion=fusionGene
@@ -369,10 +369,10 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params)
   myFusion$ssStart=ifelse(abs(myFusion$ssExStartGe)<shrinkLen,2,myFusion$ssStart)
   myFusion$ssStart=ifelse(abs(myFusion$ssExStart)<shrinkLen,1,myFusion$ssStart)
   
-  if (FuSeq.params$keepRData){
-    cat("\n Saving SR fusion candidates with extra information...")
-    save(myFusion,file=paste(FuSeq.params$outputDir,"/FuSeq_SR_myFusion.RData",sep=""))
-  }
+#  if (FuSeq.params$keepRData){
+#    cat("\n Saving SR fusion candidates with extra information...")
+#    save(myFusion,file=paste(FuSeq.params$outputDir,"/FuSeq_SR_myFusion.RData",sep=""))
+#  }
   
   
   #keep only split reads passed the splicing site condition

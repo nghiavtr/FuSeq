@@ -1,4 +1,7 @@
 /*
+Date:13/05/2019
+- Fix the bugs of checking validatedFusionHit
+- Library type is "IU" by default and optional in the command
 Date:23/03/2017
 - Improve codes
 Date:01/11/2016
@@ -1022,8 +1025,10 @@ void processReadsQuasi(paired_parser* parser,
             for (auto lIt = leftGenes.begin(); lIt < leftGenes.end(); ++lIt)
               if (validatedFusionHit)
               for (auto rIt = rightGenes.begin(); rIt < rightGenes.end(); ++rIt){
-                if (*lIt==*rIt) validatedFusionHit = false;
-                break;
+                if (*lIt==*rIt){
+                  validatedFusionHit = false;
+                  break;
+                }
               }
 
           }
@@ -2435,7 +2440,7 @@ int main(int argc, char* argv[]) {
         ("version,v", "print version string")
         ("help,h", "produce help message")
         ("index,i", po::value<string>()->required(), "Sailfish index")
-        ("libType,l", po::value<std::string>()->required(), "Format string describing the library type")
+        ("libType,l", po::value<std::string>()->default_value("IU"), "Format string describing the library type")
         ("unmatedReads,r", po::value<vector<string>>(&unmatedReadFiles)->multitoken(),
          "List of files containing unmated reads of (e.g. single-end reads)")
         ("mates1,1", po::value<vector<string>>(&mate1ReadFiles)->multitoken(),
@@ -2551,21 +2556,6 @@ int main(int argc, char* argv[]) {
         if (discardOrphans) {
             sopt.allowOrphans = false;
         }
-/*
-        std::stringstream commentStream;
-        commentStream << "# sailfish (quasi-mapping-based) v" << sailfish::version << "\n";
-        commentStream << "# [ program ] => sailfish \n";
-        commentStream << "# [ command ] => quant \n";
-        for (auto& opt : orderedOptions.options) {
-            commentStream << "# [ " << opt.string_key << " ] => {";
-            for (auto& val : opt.value) {
-                commentStream << " " << val;
-            }
-            commentStream << " }\n";
-        }
-        std::string commentString = commentStream.str();
-        fmt::print(stderr, "{}", commentString);
-*/
         // Set the atomic variable numBiasSamples from the local version.
         sopt.numBiasSamples.store(numBiasSamples);
 
@@ -2628,25 +2618,6 @@ int main(int argc, char* argv[]) {
         sopt.jointLog = jointLog;
         sopt.fileLog = fileLog;
 
-/*
-        // Write out information about the command / run
-        {
-            bfs::path cmdInfoPath = outputDirectory / "cmd_info.json";
-            std::ofstream os(cmdInfoPath.string());
-            {
-                cereal::JSONOutputArchive oa(os);
-                oa(cereal::make_nvp("sf_version", std::string(sailfish::version)));
-                for (auto& opt : orderedOptions.options) {
-                    if (opt.value.size() == 1) {
-                        oa(cereal::make_nvp(opt.string_key, opt.value.front()));
-                    } else {
-                        oa(cereal::make_nvp(opt.string_key, opt.value));
-                    }
-                }
-            }
-            os.close();
-        }
-*/
         jointLog->info("parsing read library format");
 
         if (sopt.numGibbsSamples > 0 and sopt.numBootstraps > 0) {

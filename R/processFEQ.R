@@ -1,4 +1,7 @@
 ############################################################
+### 13May2019/Nghia: 
+#- revise codes to improve speed
+#- allow to get input from multiple feq files
 #####process fusion equivalence classes to generate initial fusion gene candidates
 processFEQ <-function(inPath,anntxdb,readStrands="UN",chromRef=as.character(c(1:22,"X","Y"))){
   cat("\n Read fusion equivalence classes")
@@ -6,26 +9,59 @@ processFEQ <-function(inPath,anntxdb,readStrands="UN",chromRef=as.character(c(1:
   fragmentInfo=read.csv(paste(inPath,"/fragmentInfo.txt",sep=""), header =TRUE, sep="\t")
   libsize=fragmentInfo[1,5]
   #read fusion-equivalence classes
-  feqRaw=read.csv(paste(inPath,"/feq_",readStrands,".txt",sep=""), header =TRUE, sep="\t")
-  
-  #generate feq
-  res=feqRaw[,c(2,4)]
-  myDup=duplicated(res)
-  res=res[!myDup,]
-  feq=res[,1]
-  names(feq)=res[,2]
-  cat("\n The total number of fusion equivalence classes: ",length(feq))
-  
+  #if (readStrands=="ALL") readStrands=c("RR","FF","RF","FR")  
+  feqRaw=NULL
+  eqNum=0
+  for(rf in readStrands){
+    fnIn=paste(inPath,"/feq_",rf,".txt",sep="")
+    cat("\n Reading ",fnIn)
+    feqR=read.csv(fnIn, header =TRUE, sep="\t",as.is=TRUE)
+    maxEq=max(feqR$Feq)
+    feqR=cbind(feqR,readStrands=rep(rf,nrow(feqR)))
+    feqR$Feq=feqR$Feq+eqNum
+    #update eqNum
+    eqNum=eqNum+maxEq
+    #add up
+    feqRaw=rbind(feqRaw,feqR)
+  }
+
+ ### merging the same feq
+#  #get unique feq
+#  feqRaw_TxSet=paste(feqRaw$Read,feqRaw$Transcript,sep=":")
+#  eqClass = tapply(feqRaw_TxSet,feqRaw$Feq, function(x){paste(sort(x),collapse='::')})  
+#  myDup=duplicated(feqRaw$Feq)  
+#  eqCount=feqRaw$Count[!myDup]
+#  names(eqCount)=feqRaw$Feq[!myDup]
+#  eqCount2=tapply(eqCount,eqClass,sum)
+#  feqRaw_eqClass=eqClass[match(feqRaw$Feq,as.integer(names(eqClass)))]
+#  feqRaw$Count_raw=feqRaw$Count
+#  feqRaw$Count=eqCount2[match(feqRaw_eqClass,names(eqCount2))]
+#  #update new index
+#  feqRaw$Feq_raw=feqRaw$Feq
+#  newFeq=c(1:length(eqCount2))
+#  feqRaw$Feq=newFeq[match(feqRaw_eqClass,names(eqCount2))]
+#  #reindex again
+#  newFeqUni=unique(feqRaw$Feq)
+#  feqRaw$Feq=match(feqRaw$Feq,newFeqUni)  
+#  feqRaw_eqClass=NULL
+#  feqRaw_TxSet=NULL
+  #### back to original FuSeq
+  #generate feq  
+  myDup=duplicated(feqRaw$Feq)  
+  feq=feqRaw$Count[!myDup]
+  names(feq)=feqRaw$Feq[!myDup]
+  cat("\n The total number of fusion equivalence classes: ",length(feq))  
   if (length(feq) == 0) return(NULL)
   
   cat("\n Create the maps between feq and fge")
   #get a map between tx and gene
   txToGene=select(anntxdb, keys=as.character(feqRaw[,1]), columns=c("GENEID","TXCHROM"), keytype = "TXNAME")
   feqRaw$GENEID=txToGene$GENEID
-  feqGene=feqRaw[,-c(1,2)]
+  feqGene=feqRaw[,c("Read","Feq","GENEID")]
   #remove duplicates
   myDup=duplicated(feqGene)
   feqGene=feqGene[!myDup,]
+  feqGene=feqGene[order(feqGene$Feq),] #they must be in increasing order 1,2...
   feqGene1=feqGene[feqGene$Read==1,]
   feqGene2=feqGene[feqGene$Read==2,]
   #remove duplicates of txToGene
@@ -34,48 +70,38 @@ processFEQ <-function(inPath,anntxdb,readStrands="UN",chromRef=as.character(c(1:
   ##### do indexing feq and fge
   feqGene1Num=table(feqGene1$Feq)
   feqGene2Num=table(feqGene2$Feq)
-  
+
+ # NOTE: switch the number of tx between read1 and read2 to get all combinations
   feqGene1$Read=feqGene2Num[feqGene1$Feq]
   feqGene2$Read=feqGene1Num[feqGene2$Feq]
-  
-  gene1list=apply(feqGene1,1,function(x){
-    rep(x[3],x[1])
-  })
-  gene1list=unlist(gene1list)
+
+  gene1list=rep(feqGene1[,3],feqGene1[,1])
   res=tapply(feqGene2$GENEID,feqGene2$Feq,c)
   res=data.frame(y=feqGene1Num,x=res)
-  gene2list=apply(res,1,function(x){
-    rep(x[3],x[2])
-  })
+  gene2list=rep(res[,3],res[,2])
   gene2list=unlist(gene2list)
-  
-  res=cbind(seq_along(feqGene1Num),feqGene1Num,feqGene2Num)
-  feqID=apply(res,1,function(x){
-    rep(x[1],x[2]*x[3])
-  })
-  feqID=unlist(feqID)
-  
+  feqID=rep(seq_along(feqGene1Num),feqGene1Num*feqGene2Num)  
   fgeneNames=paste(gene1list,gene2list,sep="-")
-  res=feqID
-  names(res)=fgeneNames
   
-  #index from fge to feq
-  feqFgeMap=tapply(res,names(res),c)
+  fgeneNames_uni=unique(fgeneNames)
+  fgeneNames_uni_ID=seq(length(fgeneNames_uni))
+  fgeneNames_ID=fgeneNames_uni_ID[match(fgeneNames,fgeneNames_uni)]
+
+  feqFgeMap=tapply(feqID,fgeneNames_ID,c)
   feqFgeMap=lapply(feqFgeMap,function(x) as.integer(unlist(x)))
+  names(feqFgeMap)=fgeneNames_uni[match(as.integer(names(feqFgeMap)),fgeneNames_uni_ID)]
+
   #length(feqFgeMap) # should be equal to the number of fge
   #create fge
-  fge=data.frame(fgeID=c(1:length(feqFgeMap)), name12=names(feqFgeMap))
-  
-  #index from feq to fge
-  matchID=match(names(res),as.character(fge$name12))
-  names(res)=matchID
-  fgeFeqMap=tapply(names(res),res,c)
+  fge=data.frame(fgeID=c(1:length(feqFgeMap)), name12=names(feqFgeMap),stringsAsFactors = FALSE)
+   matchID=match(fgeneNames,fge$name12)
+  fgeFeqMap=tapply(matchID,feqID,c)
   fgeFeqMap=lapply(fgeFeqMap,function(x) as.integer(unlist(x)))
-  length(fgeFeqMap) #shoud be equal to the number of feq
-  
+  #length(fgeFeqMap) #shoud be equal to the number of feq 
   
   ##### add features to fge
-  res=lapply(as.character(fge$name12), function(x) unlist(strsplit(x,"-")))
+#  res=lapply(fge$name12, function(x) unlist(strsplit(x,"-")))
+  res=strsplit(fge$name12,"-")
   res=do.call(rbind,res)
   colnames(res)=c("gene1","gene2")
   fge=cbind(fge,res)
@@ -93,7 +119,20 @@ processFEQ <-function(inPath,anntxdb,readStrands="UN",chromRef=as.character(c(1:
     supportCount[gid]=supportCount[gid]+feqCount
   }
   fusionGene$supportCount=supportCount
-  
+
+  ####
+ cat("\n Get the number of uniquely mapped supporting reads")
+ feqSize=sapply(fgeFeqMap,length)
+ uniFeq=which(feqSize==1)
+ uniCount=rep(0,nrow(fge))
+#  for (feqID in 1:length(feq)){
+   for (feqID in uniFeq){
+    feqCount=feq[feqID]
+    gid=unlist(fgeFeqMap[feqID])
+    uniCount[gid]=uniCount[gid]+feqCount
+  }
+  fusionGene$uniCount=uniCount  
+
   ### estimate counts for fusion genes
   cat("\n Correct the number of supporting reads")
   alp0=rep(sum(feq)/nrow(fusionGene),nrow(fusionGene))
@@ -102,7 +141,8 @@ processFEQ <-function(inPath,anntxdb,readStrands="UN",chromRef=as.character(c(1:
   res=estimateCountEM(alp0,alpOut,feq,fgeFeqMap,itNum=1,alpDiff.thres=0.01)
   
   fusionGene$correctedCount=res$correctedCount
-  fusionGene=fusionGene[order(fusionGene$correctedCount,decreasing=TRUE),]
+  #sort by corrected count
+  fusionGene=fusionGene[order(fusionGene$correctedCount,decreasing=TRUE),] 
   
   #######
   cat("\n Keep only candidates in the selected chromosomes")

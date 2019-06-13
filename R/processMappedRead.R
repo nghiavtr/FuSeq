@@ -15,10 +15,10 @@ processMappedRead <-function(inPath,geneAnno,anntxdb,geeqMap=NULL,FuSeq.params,f
 	
 	if (is.null(feqInfo)){
 	  feqInfo=processFEQ(inPath,anntxdb,readStrands=FuSeq.params$readStrands,chromRef=FuSeq.params$chromRef)
-	  if (FuSeq.params$keepRData){
-	    cat("\n Saving MR fusion candidates ...")
-	    save(feqInfo,file=paste(FuSeq.params$outputDir,"/FuSeq_MR_feqInfo.RData",sep=""))
-	  }
+#	  if (FuSeq.params$keepRData){
+#	    cat("\n Saving MR fusion candidates ...")
+#	    save(feqInfo,file=paste(FuSeq.params$outputDir,"/FuSeq_MR_feqInfo.RData",sep=""))
+#	  }
 	}
 
 	
@@ -195,7 +195,7 @@ processMappedRead <-function(inPath,geneAnno,anntxdb,geeqMap=NULL,FuSeq.params,f
 	
 	#detect junction breaks
 	cat("\n Detect junction breaks... ")
-	junctBr=detectJunctionBreaks(myFusionFinal,inPath, feqInfo$feq,feqInfo$feqFgeMap, anntxdb, readStrands=FuSeq.params$readStrands)
+	junctBr=detectJunctionBreaks(myFusionFinal,inPath, feqInfo, anntxdb, readStrands=FuSeq.params$readStrands)
 	myFusionFinal=junctBr$myFusionFinal
 	
 	myFusionFinal=myFusionFinal[order(myFusionFinal$nondupCount, decreasing = TRUE),]
@@ -220,3 +220,4 @@ processMappedRead <-function(inPath,geneAnno,anntxdb,geeqMap=NULL,FuSeq.params,f
 	res=list(myFusionFinal=myFusionFinal,junctBr=junctBr,feqInfo=feqInfo,fragmentInfo=fragmentInfo,fragDist=fragDist)
 	return(res)
 }
+

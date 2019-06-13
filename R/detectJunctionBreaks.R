@@ -1,6 +1,9 @@
 ############################################################
 ##### detect junction break positions from mapped reads
-detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStrands="UN", shrinkLen=3){
+###
+# 15May2019/Nghia: vectorization to speed up function detectJunctionBreaks()
+###
+detectJunctionBreaks <-function(fgeList,inPath,feqInfo,anntxdb, readStrands="UN", shrinkLen=3){
   myFusionFinal=fgeList
   ##### input fusion reads
   #load fusion reads
@@ -21,6 +24,8 @@ detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStra
   fre1=trimws(fre1)
   fre2=as.character(fusionRead$read2)
   fre2=trimws(fre2)
+  fre1=tapply(c(1:length(fre1)),fre1,c)
+  fre2=tapply(c(1:length(fre2)),fre2,c)
   read1Pos=as.character(fusionRead$read1Pos)
   read2Pos=as.character(fusionRead$read2Pos)
   seq1Pos=as.character(fusionRead$seq1Pos)
@@ -29,30 +34,22 @@ detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStra
   seq2Len=as.character(fusionRead$seq2Len)
   
 
-    #load fragment info - this is not neccessary thi moment
+  #load fragment info - this is not neccessary thi moment
   fragmentInfo=read.csv(paste(inPath,"/fragmentInfo.txt",sep=""), header =TRUE, sep="\t")
   readLen=fragmentInfo[1,1]
   #load the feq file
-  feqRaw=read.csv(paste(inPath,"/feq_",readStrands,".txt",sep=""), header =TRUE, sep="\t")
-  
-  # #Keep only reads and feqs relating to myFusionFinal
-  # allTx=select(anntxdb, keys=unique(c(as.character(myFusionFinal$gene5p),as.character(myFusionFinal$gene3p))), columns=c("TXNAME"), keytype = "GENEID")
-  # feqRaw=feqRaw[as.character(feqRaw$Transcript) %in% as.character(allTx$TXNAME),]
-  
+  feqRaw=feqInfo$feqRaw  
   feqRead1=feqRaw[feqRaw$Read==1,]
   feqRead2=feqRaw[feqRaw$Read==2,]
   #get feq-fge map
-  # feqFgeMap=feqInfo$feqFgeMap
-  # feq=feqInfo$feq
-  
-  
-  
+  feqFgeMap=feqInfo$feqFgeMap
+  feq=feqInfo$feq 
   
   cat("\n Preparing other information ...")
   feqFtxMap1=tapply(as.character(feqRead1$Transcript),feqRead1$Feq,c)
-  feqRead1Name=unlist(lapply(feqFtxMap1,function(x) paste(x,collapse =" ")))
+  feqRead1Name=sapply(feqFtxMap1,function(x) paste(x,collapse =" "))
   feqFtxMap2=tapply(as.character(feqRead2$Transcript),feqRead2$Feq,c)
-  feqRead2Name=unlist(lapply(feqFtxMap2,function(x) paste(x,collapse =" ")))
+  feqRead2Name=sapply(feqFtxMap2,function(x) paste(x,collapse =" "))
   
   read1Pos=lapply(read1Pos,function(x) as.integer(unlist(strsplit(x," "))))
   read2Pos=lapply(read2Pos,function(x) as.integer(unlist(strsplit(x," "))))
@@ -93,8 +90,9 @@ detectJunctionBreaks <-function(fgeList,inPath,feq, feqFgeMap, anntxdb, readStra
     for (j in 1:length(myfeqID)){
       feqName=names(feq[myfeqID[j]])
       #keepID=which(fre1==feqRead1Name[myfeqID[j]] & fre2==feqRead2Name[myfeqID[j]])
-      keepID1=which(fre1==feqRead1Name[myfeqID[j]])
-      keepID=keepID1[which(fre2[keepID1]==feqRead2Name[myfeqID[j]])]
+#      keepID1=which(fre1==feqRead1Name[myfeqID[j]])
+#      keepID=keepID1[which(fre2[keepID1]==feqRead2Name[myfeqID[j]])]
+      keepID=intersect(fre1[[feqRead1Name[myfeqID[j]]]],fre2[[feqRead2Name[myfeqID[j]]]])
 
       readID[[feqName]]=keepID
       

@@ -33,10 +33,19 @@ mappedFge$fusionName=paste(mappedFge$gene5p,mappedFge$gene3p,sep="-")
 
 myFusionTmp2=myFusionTmp
 #If we limit only splicing sites at exon boundary
-myFusionTmp2=myFusionTmp2[myFusionTmp2$ssEnd<=2,]
-myFusionTmp2=myFusionTmp2[myFusionTmp2$ssStart<=2,]
-matchID=match(as.character(myFusionTmp2$name12),as.character(mappedFge$fusionName))
+if (FuSeq.params$exonBoundary){
+  myFusionTmp2=myFusionTmp2[myFusionTmp2$ssEnd<=2,]
+  myFusionTmp2=myFusionTmp2[myFusionTmp2$ssStart<=2,]
+} else {
+  pick=c(which(myFusionTmp2$GCEnd & myFusionTmp2$AGStart),
+    which(myFusionTmp2$GTEnd & myFusionTmp2$AGStart),
+    which(myFusionTmp2$ATEnd & myFusionTmp2$ACStart), 
+    which(myFusionTmp2$ssEnd<=2 & myFusionTmp2$ssStart<=2))
+  pick=unique(pick)
+  myFusionTmp2=myFusionTmp2[pick,]
+}
 
+matchID=match(as.character(myFusionTmp2$name12),as.character(mappedFge$fusionName))
 myFusionTmp2$total21=myFusionTmp2$tx21Count
 myFusionTmp2$total21[which(!is.na(matchID))]=myFusionTmp2$total21[which(!is.na(matchID))]+mappedFge$name21Count[na.omit(matchID)]
 myFusionTmp2$totalCount=myFusionTmp2$adjtx12Count
@@ -434,7 +443,7 @@ matchID=match(as.character(myFusionMapped$name12), names(FuSeq.MR$feqInfo$feqFge
 myFusionMapped=myFusionMapped[which(!is.na(matchID)),]
 
 if (nrow(myFusionMapped) > 0){
-  junctBr=detectJunctionBreaks(myFusionMapped,inPath, FuSeq.MR$feqInfo$feq,FuSeq.MR$feqInfo$feqFgeMap, anntxdb, readStrands=FuSeq.params$readStrands)
+  junctBr=detectJunctionBreaks(myFusionMapped,inPath, FuSeq.MR$feqInfo, anntxdb, readStrands=FuSeq.params$readStrands)
   myFusionMapped=junctBr$myFusionFinal
   
   ok5Pos=ok3Pos=NULL
@@ -621,7 +630,7 @@ myFusionFinal=myFusion
 #dim(myFusionFinal)
 
 ### 12 Nov 2018: 
-# - allow fusions with multiple breaking points
+# - allow fusions with multiple breaking points at this step
 # - keep the ones with max totalCount 
 fgeSetAll=paste(myFusionFinal$name12,myFusionFinal$brchposEx5,myFusionFinal$brchposEx3,sep="__")
 fgeSet=unique(fgeSetAll)

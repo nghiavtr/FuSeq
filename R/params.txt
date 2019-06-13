@@ -13,5 +13,6 @@ maxMRfusionNum=2
 sgtMRcount=10
 minSR=1
 minScore=3
+exonBoundary=TRUE
 keepRData=TRUE
 exportFasta=FALSE
