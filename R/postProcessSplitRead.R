@@ -52,7 +52,7 @@ myFusionTmp2$totalCount=myFusionTmp2$adjtx12Count
 myFusionTmp2$totalCount[which(!is.na(matchID))]=myFusionTmp2$totalCount[which(!is.na(matchID))]+mappedFge$correctedCount[na.omit(matchID)]
 myFusionTmp2$mappedCrtCount=myFusionTmp2$totalCount-myFusionTmp2$adjtx12Count
 myFusionTmp2$mappedCount=myFusionTmp2$mappedCrtCount
-myFusionTmp2$mappedCount=0
+myFusionTmp2$mappedCount=myFusionTmp2$mappedCount-myFusionTmp2$mappedCount #set to be zero
 myFusionTmp2$mappedCount[which(!is.na(matchID))]=mappedFge$supportCount[na.omit(matchID)]
 
 #filter again by inverted direction fusion genes
@@ -65,6 +65,13 @@ myFusion=myFusionTmp2
 #do some filters here
 # totalCount here is the sum of adjusted counts from mapped reads and split reads
 myFusion=myFusion[myFusion$totalCount>=1,]
+
+if (nrow(myFusion)== 0) {
+  myFusion$score=myFusion$totalCount
+  myFusion$supportRead=myFusion$totalCount
+  myFusion$fusionName=myFusion$name12
+  return(list(junctInfo=NULL,myFusionFinal=myFusion, myFusion=myFusion, myFusionMapped=NULL,junctBr.refine=NULL))
+}
 
 myFusion$note3=myFusion$note5=""
 myDup=duplicated(myFusion$name12)
