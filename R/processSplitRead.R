@@ -44,7 +44,7 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params)
   res=select(anntxdb, keys=as.character(fusionGene$back_gene), columns=c("GENEID","TXCHROM","TXSTRAND"), keytype = "GENEID")
   colnames(res)=c("GENEID","chrom2","strand2")
   fusionGene=cbind(fusionGene,res[,-1])
-  fusionGene=chromFilter(fusionGene) 
+  fusionGene=chromFilter(fusionGene,chromRef=FuSeq.params$chromRef)
   
   fusionGene$gene1=fusionGene$front_gene
   fusionGene$gene2=fusionGene$back_gene
@@ -400,6 +400,7 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params)
 	res=list(myFusionFinal=myFusion,fusionGene=fusionGene,fragmentInfo=fragmentInfo,fragDist=fragDist,myFusionFP=myFusionFP)
 	return(res)
 }
+
 
 
 
