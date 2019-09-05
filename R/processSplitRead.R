@@ -34,7 +34,12 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params)
   fusionGene$name12=paste(fusionGene$front_gene,fusionGene$back_gene,sep="-")
   fusionGene$name21=paste(fusionGene$back_gene,fusionGene$front_gene,sep="-")
   
-  
+  #remove transcripts not belonging to the list of transcripts in anntxdb, this is weird but happening in the annotation Homo_sapiens.GRCh38 where there is a discordance between gtf and cdna fasta
+  alltx=mcols(transcripts(anntxdb))$tx_name
+  pick=which(fusionGene$front_tx %in% alltx & fusionGene$back_tx %in% alltx)
+  fusionGene=fusionGene[pick,]
+  alltx=NULL
+
   ############# starting process
   cat("\n Extract other biological information...")
   #add few biological information
