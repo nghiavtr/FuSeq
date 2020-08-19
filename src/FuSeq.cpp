@@ -2005,7 +2005,8 @@ void setEffectiveLengthsDirect(ReadExperiment& readExp,
         }
 }
 
-void computeEmpiricalEffectiveLengths(
+//FuSeq: 25Otc2019
+void exportFragmentDist(
         const SailfishOpts& sfOpts,
         std::vector<Transcript>& transcripts,
         std::map<uint32_t, uint32_t>& jointMap) {
@@ -2029,6 +2030,36 @@ void computeEmpiricalEffectiveLengths(
                 std::string mytext=std::to_string(kv.first)+ "\t"+std::to_string(kv.second)+"\n";
                 fmt::print(fragmentDistOutput.get(), mytext);
                 //FuSeq
+            }
+
+}
+
+
+void computeEmpiricalEffectiveLengths(
+        const SailfishOpts& sfOpts,
+        std::vector<Transcript>& transcripts,
+        std::map<uint32_t, uint32_t>& jointMap) {
+            std::vector<uint32_t> vals;
+            std::vector<uint32_t> multiplicities;
+
+            vals.reserve(jointMap.size());
+            multiplicities.reserve(jointMap.size());
+/*
+            //FuSeq
+            //Extract information of fragment length
+            string fragmentDistfn ="fragmentDist.txt";
+            boost::filesystem::path fragmentDistfnpath = sfOpts.outputDirectory  / fragmentDistfn;
+            std::unique_ptr<std::FILE, int (*)(std::FILE *)> fragmentDistOutput(std::fopen(fragmentDistfnpath.c_str(), "a"), std::fclose); 
+            //FuSeq
+*/
+            for (auto& kv : jointMap) {
+                vals.push_back(kv.first);
+                multiplicities.push_back(kv.second);
+/*                //FuSeq
+                std::string mytext=std::to_string(kv.first)+ "\t"+std::to_string(kv.second)+"\n";
+                fmt::print(fragmentDistOutput.get(), mytext);
+                //FuSeq
+*/                
             }
 
             sfOpts.jointLog->info("Building empirical fragment length distribution");
@@ -2297,6 +2328,10 @@ void quasiMapReads(
         // Note: if "noEffectiveLengthCorrection" is set, so that these values
         // won't matter anyway, then don't bother computing this "expensive"
         // version.
+
+        //FuSeq - Export exportFragmentDist
+        exportFragmentDist(sfOpts, readExp.transcripts(), jointMap);
+
         if (sfOpts.noEffectiveLengthCorrection) {
             setEffectiveLengthsDirect(readExp, sfOpts);
         } else {

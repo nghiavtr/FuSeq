@@ -387,15 +387,18 @@ processSplitRead <-function(inPath,geneAnno, anntxdb, txFastaFile, FuSeq.params)
   rmID=which(myFusion$ssEnd>=3 & myFusion$ssStart>=3)
   if (length(rmID)>0)  myFusion=myFusion[-rmID,]
   
-   cat("\n\n Checking possible paralogs...")
+  cat("\n\n Checking possible paralogs...")
+  gp=paste(geneParalog[,1],"-",geneParalog[,2],sep="")  
+  rmID=myFusion$name12 %in% gp | myFusion$name21 %in% gp
+  rmID=!rmID
 
-  #remove paralogs from database
-  rmID=unlist(lapply(c(1:nrow(myFusion)), function(x){
-    par1=c(as.character(myFusion$gene1[x]),geneParalog[which(geneParalog[,1]==as.character(myFusion$gene1[x])),2])
-    par2=c(as.character(myFusion$gene2[x]),geneParalog[which(geneParalog[,1]==as.character(myFusion$gene2[x])),2])
-    if (length(par1)>0 & length(par2)>0) return(length(intersect(par1,par2))>0)
-    return(FALSE)
-  }))
+#  #remove paralogs from database
+#  rmID=unlist(lapply(c(1:nrow(myFusion)), function(x){
+#    par1=c(as.character(myFusion$gene1[x]),geneParalog[which(geneParalog[,1]==as.character(myFusion$gene1[x])),2])
+#    par2=c(as.character(myFusion$gene2[x]),geneParalog[which(geneParalog[,1]==as.character(myFusion$gene2[x])),2])
+#    if (length(par1)>0 & length(par2)>0) return(length(intersect(par1,par2))>0)
+#    return(FALSE)
+#  }))
   
   myFusion$paralog=rep(0,nrow(myFusion))
   myFusion$paralog[rmID]=1

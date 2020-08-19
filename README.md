@@ -1,8 +1,14 @@
 #####################################
-# Documents for FuSeq version 1.1.2
+# Documents for FuSeq version 1.1.3
 #####################################
 
 ## Update news
+#### 19 Aug 2020: version 1.1.3
+1) speed up the processSplitRead() in the paralogs checking
+2) export fragmentDist.txt for the data with a low mapped read rate
+3) fix the error when installing from sources caused by the dependency fmtlib mentioned in https://github.com/nghiavtr/FuSeq/issues/1
+4) fix the error when running the binary version in Ubuntu
+
 #### 09 Sep 2019: version 1.1.2
 1) Fix small bugs in processSplitRead.R and postProcessSplitRead.R
 2) Add excludeDiscordantTx.R (details in Section 7) to remove the discordant transcripts which are existing in fasta cdna file but not in gtf file. These discordant transcripts can crash down the split-read pipeline. This step is recommmended for any untested or new annotations such as Homo_sapiens.GRCh38.
@@ -61,6 +67,7 @@ We also prepare annotation RData files for several annotations from Ensembl (ens
 The latest version and information of FuSeq are updated at https://github.com/nghiavtr/FuSeq
 
 The older versions can be found here:
+- Version 1.1.2: https://github.com/nghiavtr/FuSeq/releases/tag/v1.1.2
 - Version 1.1.1: https://github.com/nghiavtr/FuSeq/releases/tag/v1.1.1
 - Version 1.1.0: https://github.com/nghiavtr/FuSeq/releases/tag/v1.1.0
 - Version 1.0.0: https://github.com/nghiavtr/FuSeq/releases/tag/v1.0.0
@@ -69,30 +76,30 @@ The older versions can be found here:
 
 ## 2. Download and installation
 If you use the binary verion of FuSeq: 
-- Download the lastest binary version from FuSeq website: [FuSeq_v1.1.2_linux_x86-64](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.2/FuSeq_v1.1.2_linux_x86-64.tar.gz)
+- Download the lastest binary version from FuSeq website: [FuSeq_v1.1.3_linux_x86-64](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.3/FuSeq_v1.1.3_linux_x86-64.tar.gz)
 ```sh
-wget https://github.com/nghiavtr/FuSeq/releases/download/v1.1.2/FuSeq_v1.1.2_linux_x86-64.tar.gz -O FuSeq_v1.1.2_linux_x86-64.tar.gz
+wget https://github.com/nghiavtr/FuSeq/releases/download/v1.1.3/FuSeq_v1.1.3_linux_x86-64.tar.gz -O FuSeq_v1.1.3_linux_x86-64.tar.gz
 ```
 - Uncompress to folder
 ```sh
-tar -xzvf FuSeq_v1.1.2_linux_x86-64.tar.gz
+tar -xzvf FuSeq_v1.1.3_linux_x86-64.tar.gz
 ```
 - Move to the *FuSeq_home* directory and do configuration for FuSeq
 ```sh
-cd FuSeq_v1.1.2_linux_x86-64
+cd FuSeq_v1.1.3_linux_x86-64
 bash configure.sh
 ```
 - Add paths of lib folder and bin folder to LD_LIBRARY_PATH and PATH
 ```sh
-export LD_LIBRARY_PATH=/path/to/FuSeq_v1.1.2_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
-export PATH=/path/to/FuSeq_v1.1.2_linux_x86-64/linux/bin:$PATH
+export LD_LIBRARY_PATH=/path/to/FuSeq_v1.1.3_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
+export PATH=/path/to/FuSeq_v1.1.3_linux_x86-64/linux/bin:$PATH
 ```
 If you want to build FuSeq from sources:
 - Download FuSeq from [FuSeq website](https://github.com/nghiavtr/FuSeq) and move to *FuSeq_home* directory
 ```sh
-wget https://github.com/nghiavtr/FuSeq/archive/v1.1.2.tar.gz
-tar -xzvf v1.1.2.tar.gz
-cd FuSeq-1.1.2
+wget https://github.com/nghiavtr/FuSeq/archive/v1.1.3.tar.gz
+tar -xzvf v1.1.3.tar.gz
+cd FuSeq-1.1.3
 ```
 - FuSeq requires information of flags from Sailfish including DFETCH_BOOST, DBOOST_ROOT, DTBB_INSTALL_DIR and DCMAKE_INSTALL_PREFIX. Please refer to the Sailfish website for more details of these flags.
 - Do installation by the following command:
@@ -256,16 +263,16 @@ For simplicity, in this practice, the FuSeq software, the annotation, RNA-seq da
 ### 8.1. Download and install
 #### Download and configure FuSeq
 ```sh
-wget https://github.com/nghiavtr/FuSeq/releases/download/v1.1.2/FuSeq_v1.1.2_linux_x86-64.tar.gz -O FuSeq_v1.1.2_linux_x86-64.tar.gz
-tar -xzvf FuSeq_v1.1.2_linux_x86-64.tar.gz
-cd FuSeq_v1.1.2_linux_x86-64
+wget https://github.com/nghiavtr/FuSeq/releases/download/v1.1.3/FuSeq_v1.1.3_linux_x86-64.tar.gz -O FuSeq_v1.1.3_linux_x86-64.tar.gz
+tar -xzvf FuSeq_v1.1.3_linux_x86-64.tar.gz
+cd FuSeq_v1.1.3_linux_x86-64
 bash configure.sh
 cd ..
 ```
 #### Set paths to FuSeq
 ```sh
-export LD_LIBRARY_PATH=$PWD/FuSeq_v1.1.2_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
-export PATH=$PWD/FuSeq_v1.1.2_linux_x86-64/linux/bin:$PATH
+export LD_LIBRARY_PATH=$PWD/FuSeq_v1.1.3_linux_x86-64/linux/lib:$LD_LIBRARY_PATH
+export PATH=$PWD/FuSeq_v1.1.3_linux_x86-64/linux/bin:$PATH
 ```
 ### 8.2. Download and prepare the reference files
 #### Download the fasta and gtf of transcripts
@@ -277,14 +284,14 @@ gunzip Homo_sapiens.GRCh37.75.gtf.gz
 ```
 #### Create sqlite
 ```sh
-Rscript FuSeq_v1.1.2_linux_x86-64/R/createSqlite.R Homo_sapiens.GRCh37.75.gtf Homo_sapiens.GRCh37.75.sqlite 
+Rscript FuSeq_v1.1.3_linux_x86-64/R/createSqlite.R Homo_sapiens.GRCh37.75.gtf Homo_sapiens.GRCh37.75.sqlite 
 ```
 #### Download the extra transcript information and annotation from FuSeq
 ```sh
 wget https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData
 ```
 ### 8.3. Parameter setting
-The default of parameter setting is located at FuSeq_v1.1.2_linux_x86-64/R/params.txt that we will use for the pratical examples.
+The default of parameter setting is located at FuSeq_v1.1.3_linux_x86-64/R/params.txt that we will use for the pratical examples.
 For more advanced-level users, we suggest running FuSeq with the setting of keepRData=TRUE to keep the processed data of FuSeq, then FuSeq will save all data into file FuSeq_process.RData. This file contains the results of both mapped read pipeline and split read pipeline, and extra relevant information of fusion gene candidates such as supporting exons, read mapping positions, sequence reads, etc.
 
 ### 8.4. An example for a short read sample 
@@ -306,7 +313,7 @@ FuSeq -i TxIndexer_idx_k21 -l IU -1 <(gunzip -c SRR064287_1.fastq.gz) -2 <(gunzi
 ```
 #### Discover fusion genes
 ```sh
-Rscript FuSeq_v1.1.2_linux_x86-64/R/FuSeq.R in=SRR064287_feqDir txfasta=Homo_sapiens.GRCh37.75.cdna.all.fa sqlite=Homo_sapiens.GRCh37.75.sqlite txanno=Homo_sapiens.GRCh37.75.txAnno.RData out=SRR064287_FuseqOut params=FuSeq_v1.1.2_linux_x86-64/R/params.txt
+Rscript FuSeq_v1.1.3_linux_x86-64/R/FuSeq.R in=SRR064287_feqDir txfasta=Homo_sapiens.GRCh37.75.cdna.all.fa sqlite=Homo_sapiens.GRCh37.75.sqlite txanno=Homo_sapiens.GRCh37.75.txAnno.RData out=SRR064287_FuseqOut params=FuSeq_v1.1.3_linux_x86-64/R/params.txt
 ```
 The results is a list of gene-fusion candidates stored in file fusions.FuSeq in the output folder (SRR064287_FuseqOut).
 
@@ -333,7 +340,7 @@ FuSeq -i TxIndexer_idx_k31 -l IU -1 <(gunzip -c SRR934746_1.fastq.gz) -2 <(gunzi
 ```
 #### Discover fusion genes
 ```sh
-Rscript FuSeq_v1.1.2_linux_x86-64/R/FuSeq.R in=SRR934746_feqDir txfasta=Homo_sapiens.GRCh37.75.cdna.all.fa sqlite=Homo_sapiens.GRCh37.75.sqlite txanno=Homo_sapiens.GRCh37.75.txAnno.RData out=SRR934746_FuseqOut params=FuSeq_v1.1.2_linux_x86-64/R/params.txt
+Rscript FuSeq_v1.1.3_linux_x86-64/R/FuSeq.R in=SRR934746_feqDir txfasta=Homo_sapiens.GRCh37.75.cdna.all.fa sqlite=Homo_sapiens.GRCh37.75.sqlite txanno=Homo_sapiens.GRCh37.75.txAnno.RData out=SRR934746_FuseqOut params=FuSeq_v1.1.3_linux_x86-64/R/params.txt
 ```
 The results is a list of fusion gene candidates stored in file fusions.FuSeq in the output folder (SRR934746_FuseqOut).
 ## 9. License
