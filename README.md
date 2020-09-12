@@ -62,6 +62,7 @@ Current FuSeq version was tested on the human transcriptome with ensembl annotat
 We also prepare annotation RData files for several annotations from Ensembl (ensembl.org) and example codes to build the annotation RData file in folder [*createAnno*](https://github.com/nghiavtr/FuSeq/tree/master/createAnno). **Please see Section 7 for further information.**
 - [Homo sapiens version GRCh38.94](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/Homo_sapiens.GRCh38.94.txAnno.RData): *However, before running FuSeq for this annotation, users should clean the version information from the transcript names and gene names as described in Section 7*.
 - [Arabidopsis thaliana version TAIR10.41](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/Arabidopsis_thaliana.TAIR10.41.txAnno.RData)
+- [Pig (Sus scrofa) version Sus_scrofa.Sscrofa11.1 release 101](https://github.com/nghiavtr/FuSeq/releases/download/v1.1.3/Sus_scrofa.Sscrofa11.1.txAnno.RData)
 
 ### Versions
 The latest version and information of FuSeq are updated at https://github.com/nghiavtr/FuSeq
