@@ -1,3 +1,5 @@
+##### Date: 22 Sep 2020
+# remove also the version info of gene
 ##### Date: 08 Nov 2018
 ##### Contact: Trung Nghia Vu (nghiavtr@gmail.com)
 ##### This script is to remove version number in the transcript name from ensembl annotation
@@ -17,8 +19,15 @@ txName=sapply(txheaderID, function(i){
 	x=mydata[i]
 	y=unlist(strsplit(x," "))
   	t=substring(y[1],2)
-  	t2=unlist(strsplit(t,"\\."))[1]
+  	t2=unlist(strsplit(t,"\\."))[1]  	
   	x1=gsub(t,t2,x)
+
+  	pick=grep("gene:",y)
+  	if (length(pick)>0){
+	  	t=y[pick[1]]
+	  	t2=unlist(strsplit(t,"\\."))[1]
+	  	x1=gsub(t,t2,x1)
+  	}
   	return(x1)
 })
 

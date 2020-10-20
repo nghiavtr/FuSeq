@@ -178,8 +178,8 @@ if (validatedCommand){
 			myFusionExport$symbol5=hgncName$hgnc_symbol[match(myFusionExport$gene5,hgncName$ensembl_gene_id)]
 			myFusionExport$symbol3=hgncName$hgnc_symbol[match(myFusionExport$gene3,hgncName$ensembl_gene_id)]    
 		}else{
-			myFusionExport$symbol5=""
-			myFusionExport$symbol3=""
+			myFusionExport$symbol5="N.A"
+			myFusionExport$symbol3="N.A"
 		}
 		#reorder the column names
 		myFusionExport=myFusionExport[,c("gene5","chrom5","strand5","brpos5","cds.brpos5.start","gene3","chrom3","strand3","brpos3","cds.brpos3.start","fusionName","symbol5","symbol3","SR.passed","MR.passed","supportRead","score")]
