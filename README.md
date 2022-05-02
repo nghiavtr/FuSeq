@@ -1,8 +1,9 @@
 #####################################
 # Documents for FuSeq version 1.1.4
 #####################################
-
 ## Update news
+#### 05 Apr 2020: release FuSeq_WES
+Release FuSeq_WES for fusion detection from DNA sequencing data: https://github.com/nghiavtr/FuSeq_WES
 #### 19 Oct 2020: version 1.1.4
 1) add "N.A" to column "symbol5" and "symbol3" if they are not found in HGNC
 2) update excludeTxVersion.R to remove also the version information of gene from the cdna fasta file
